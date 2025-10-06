@@ -2,7 +2,8 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { useSession, signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
@@ -14,7 +15,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
-import { useAuth } from "./auth"
 import {
   LayoutDashboard,
   MessageSquare,
@@ -75,9 +75,17 @@ interface AdminLayoutProps {
 }
 
 export function AdminLayout({ children }: AdminLayoutProps) {
-  const { user, logout } = useAuth()
+  const { data: session } = useSession()
+  const router = useRouter()
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const user = session?.user
+
+  const handleLogout = async () => {
+    await signOut({ redirect: false })
+    router.push('/admin/login')
+  }
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -185,7 +193,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
                     <AvatarFallback>
-                      {user?.name?.split(' ').map(n => n[0]).join('') || 'A'}
+                      {user?.name?.split(' ').map((n: string) => n[0]).join('') || 'A'}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -213,7 +221,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout} className="cursor-pointer">
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />
                   Log out
                 </DropdownMenuItem>
