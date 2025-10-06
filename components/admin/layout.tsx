@@ -27,6 +27,7 @@ import {
   User,
   Home,
   TrendingUp,
+  PenTool,
 } from "lucide-react"
 
 const navigation = [
@@ -50,7 +51,7 @@ const navigation = [
   {
     name: "Blog Posts",
     href: "/admin/blog",
-    icon: FileText,
+    icon: PenTool,
   },
   {
     name: "Clients",
