@@ -29,6 +29,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
+          console.log('Missing credentials')
           return null
         }
 
@@ -36,6 +37,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const password = credentials.password as string
 
         try {
+          console.log('Attempting login for:', email)
+          
           // Query the database for the user
           const users = await sql`
             SELECT id, email, password_hash, name, role
@@ -44,19 +47,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             LIMIT 1
           `
 
+          console.log('Database query result:', users.length > 0 ? 'User found' : 'No user found')
+
           if (users.length === 0) {
+            console.log('No user found with email:', email)
             return null
           }
 
           const user = users[0]
+          console.log('Found user:', user.email, 'with role:', user.role)
 
           // Verify the password
           const isPasswordValid = await bcrypt.compare(password, user.password_hash)
+          console.log('Password validation result:', isPasswordValid)
 
           if (!isPasswordValid) {
+            console.log('Invalid password for user:', email)
             return null
           }
 
+          console.log('Login successful for:', email)
+          
           // Return user object (will be stored in JWT)
           return {
             id: user.id.toString(),
@@ -97,4 +108,5 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: '/admin/login',
     error: '/admin/login',
   },
+  debug: process.env.NODE_ENV === 'development',
 })
