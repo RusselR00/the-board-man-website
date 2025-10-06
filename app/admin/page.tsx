@@ -1,304 +1,304 @@
+"use client"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   MessageSquare,
   Calendar,
-  FileText,
   Users,
   TrendingUp,
   Mail,
-  Phone,
   Clock,
   CheckCircle,
   AlertCircle,
-  DollarSign,
 } from "lucide-react"
 import Link from "next/link"
+import { useEffect, useState } from "react"
+import { adminApi } from "@/lib/api-client"
+
+interface DashboardStats {
+  contacts: {
+    total: number
+    pending: number
+    responded: number
+    thisWeek: number
+  }
+  bookings: {
+    total: number
+    pending: number
+    confirmed: number
+    completed: number
+    thisWeek: number
+  }
+  recentActivity: Array<{
+    type: 'contact' | 'booking'
+    name: string
+    email: string
+    created_at: string
+    status: string
+  }>
+}
 
 export default function AdminDashboard() {
-  // Mock data - in production, fetch from your database
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setIsLoading(true)
+        const data = await adminApi.getStats()
+        if (data.success) {
+          setDashboardStats(data.data)
+        } else {
+          setError('Failed to fetch dashboard stats')
+        }
+      } catch (err) {
+        console.error('Dashboard stats error:', err)
+        setError('Failed to connect to database. Using demo data.')
+        // Fallback to demo data
+        setDashboardStats({
+          contacts: { total: 127, pending: 45, responded: 82, thisWeek: 12 },
+          bookings: { total: 24, pending: 8, confirmed: 12, completed: 4, thisWeek: 5 },
+          recentActivity: [
+            {
+              type: 'contact',
+              name: 'John Doe',
+              email: 'john@example.com',
+              created_at: new Date().toISOString(),
+              status: 'pending'
+            }
+          ]
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchStats()
+  }, [])
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
+          <p className="text-muted-foreground">Overview of your business activities</p>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-4" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-16 mb-2" />
+                <Skeleton className="h-3 w-20" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (error && !dashboardStats) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Card className="w-96">
+          <CardHeader>
+            <CardTitle className="flex items-center text-red-600">
+              <AlertCircle className="mr-2 h-5 w-5" />
+              Error Loading Dashboard
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()}>
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   const stats = [
     {
       title: "Total Contacts",
-      value: "127",
-      change: "+12%",
+      value: dashboardStats?.contacts.total.toString() || "0",
+      change: `+${dashboardStats?.contacts.thisWeek || 0} this week`,
       changeType: "positive" as const,
       icon: MessageSquare,
-      description: "This month",
+      description: `${dashboardStats?.contacts.pending || 0} pending responses`,
+      href: "/admin/contacts"
     },
     {
-      title: "Active Bookings",
-      value: "24",
-      change: "+8%",
+      title: "Active Bookings", 
+      value: dashboardStats?.bookings.total.toString() || "0",
+      change: `+${dashboardStats?.bookings.thisWeek || 0} this week`,
       changeType: "positive" as const,
       icon: Calendar,
-      description: "This week",
+      description: `${dashboardStats?.bookings.pending || 0} pending approval`,
+      href: "/admin/bookings"
     },
     {
-      title: "Blog Posts",
-      value: "15",
-      change: "+2",
-      changeType: "positive" as const,
-      icon: FileText,
-      description: "Published",
+      title: "Confirmed Bookings",
+      value: dashboardStats?.bookings.confirmed.toString() || "0", 
+      change: `${dashboardStats?.bookings.completed || 0} completed`,
+      changeType: "neutral" as const,
+      icon: CheckCircle,
+      description: "Ready for consultation",
+      href: "/admin/bookings?status=confirmed"
     },
     {
-      title: "Total Clients",
-      value: "89",
-      change: "+15%",
-      changeType: "positive" as const,
-      icon: Users,
-      description: "Active clients",
-    },
-  ]
-
-  const recentContacts = [
-    {
-      id: "1",
-      name: "Ahmed Hassan",
-      email: "ahmed@company.com",
-      subject: "VAT Registration Query",
-      time: "2 hours ago",
-      status: "new" as const,
-    },
-    {
-      id: "2",
-      name: "Fatima Al-Zahra",
-      email: "fatima@business.ae",
-      subject: "Audit Services Inquiry",
-      time: "4 hours ago",
-      status: "replied" as const,
-    },
-    {
-      id: "3",
-      name: "John Smith",
-      email: "john@startup.com",
-      subject: "Business Setup Consultation",
-      time: "1 day ago",
-      status: "new" as const,
-    },
-  ]
-
-  const upcomingBookings = [
-    {
-      id: "1",
-      client: "Sarah Ahmed",
-      service: "Tax Consultation",
-      date: "Today",
-      time: "2:00 PM",
-      type: "In-person",
-    },
-    {
-      id: "2",
-      client: "Mohammed Ali",
-      service: "Audit Review",
-      date: "Tomorrow",
-      time: "10:00 AM",
-      type: "Video Call",
-    },
-    {
-      id: "3",
-      client: "Lisa Johnson",
-      service: "Business Setup",
-      date: "Oct 15",
-      time: "3:30 PM",
-      type: "Phone Call",
+      title: "Response Rate",
+      value: dashboardStats?.contacts.total 
+        ? `${Math.round(((dashboardStats.contacts.responded || 0) / dashboardStats.contacts.total) * 100)}%`
+        : "0%",
+      change: "Last 30 days",
+      changeType: "neutral" as const, 
+      icon: TrendingUp,
+      description: "Contact response rate",
+      href: "/admin/contacts"
     },
   ]
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
+      {error && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+          <div className="flex">
+            <AlertCircle className="h-5 w-5 text-yellow-400" />
+            <div className="ml-3">
+              <p className="text-sm text-yellow-800">
+                {error}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600 mt-2">
-          Welcome back! Here&apos;s what&apos;s happening with your business today.
+        <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
+        <p className="text-muted-foreground">
+          Welcome back! Here's what's happening with your business.
         </p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                {stat.title}
-              </CardTitle>
-              <stat.icon className="h-4 w-4 text-gray-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
-              <div className="flex items-center space-x-2 text-xs text-gray-600">
-                <span
-                  className={`font-medium ${
-                    stat.changeType === "positive" ? "text-green-600" : "text-red-600"
-                  }`}
-                >
-                  {stat.change}
-                </span>
-                <span>{stat.description}</span>
-              </div>
-            </CardContent>
-          </Card>
+          <Link key={stat.title} href={stat.href}>
+            <Card className="hover:bg-accent transition-colors cursor-pointer">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  {stat.title}
+                </CardTitle>
+                <stat.icon className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stat.value}</div>
+                <p className="text-xs text-muted-foreground">
+                  {stat.description}
+                </p>
+                <div className="flex items-center space-x-2 text-xs mt-2">
+                  <Badge 
+                    variant={stat.changeType === 'positive' ? 'default' : 'secondary'}
+                    className="text-xs"
+                  >
+                    {stat.change}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Contact Submissions */}
-        <Card>
+      {/* Recent Activity and Quick Actions */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <Card className="col-span-4">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5" />
-                  Recent Contacts
-                </CardTitle>
-                <CardDescription>Latest contact form submissions</CardDescription>
-              </div>
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/admin/contacts">View All</Link>
-              </Button>
-            </div>
+            <CardTitle>Recent Activity</CardTitle>
+            <CardDescription>
+              Latest contacts and bookings from your website
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentContacts.map((contact) => (
-                <div
-                  key={contact.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                >
-                  <div className="flex-1">
-                    <h4 className="font-medium text-gray-900">{contact.name}</h4>
-                    <p className="text-sm text-gray-600 truncate">{contact.subject}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Mail className="h-3 w-3 text-gray-400" />
-                      <span className="text-xs text-gray-500">{contact.email}</span>
+              {dashboardStats?.recentActivity.length ? (
+                dashboardStats.recentActivity.slice(0, 8).map((activity, index) => (
+                  <div key={index} className="flex items-center">
+                    <div className="w-9 h-9 rounded-full bg-accent flex items-center justify-center">
+                      {activity.type === 'contact' ? (
+                        <Mail className="h-4 w-4" />
+                      ) : (
+                        <Calendar className="h-4 w-4" />
+                      )}
+                    </div>
+                    <div className="ml-4 space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        {activity.name}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {activity.type === 'contact' ? 'New contact' : 'New booking'} • {activity.email}
+                      </p>
+                    </div>
+                    <div className="ml-auto flex items-center space-x-2">
+                      <Badge variant={activity.status === 'pending' ? 'destructive' : 'default'}>
+                        {activity.status}
+                      </Badge>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(activity.created_at).toLocaleDateString()}
+                      </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <Badge
-                      variant={contact.status === "new" ? "default" : "secondary"}
-                    >
-                      {contact.status}
-                    </Badge>
-                    <p className="text-xs text-gray-500 mt-1">{contact.time}</p>
-                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <Clock className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">No recent activity</p>
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Upcoming Bookings */}
-        <Card>
+        <Card className="col-span-3">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Upcoming Bookings
-                </CardTitle>
-                <CardDescription>Your scheduled appointments</CardDescription>
-              </div>
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/admin/bookings">View All</Link>
-              </Button>
-            </div>
+            <CardTitle>Quick Actions</CardTitle>
+            <CardDescription>
+              Common tasks and shortcuts
+            </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {upcomingBookings.map((booking) => (
-                <div
-                  key={booking.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                >
-                  <div className="flex-1">
-                    <h4 className="font-medium text-gray-900">{booking.client}</h4>
-                    <p className="text-sm text-gray-600">{booking.service}</p>
-                    <div className="flex items-center gap-4 mt-1">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3 text-gray-400" />
-                        <span className="text-xs text-gray-500">{booking.date}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3 text-gray-400" />
-                        <span className="text-xs text-gray-500">{booking.time}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <Badge variant="outline">{booking.type}</Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <CardContent className="space-y-4">
+            <Button asChild className="w-full justify-start">
+              <Link href="/admin/contacts">
+                <MessageSquare className="mr-2 h-4 w-4" />
+                View All Contacts ({dashboardStats?.contacts.pending || 0} pending)
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full justify-start">
+              <Link href="/admin/bookings">
+                <Calendar className="mr-2 h-4 w-4" />
+                Manage Bookings ({dashboardStats?.bookings.pending || 0} pending)
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full justify-start">
+              <Link href="/contact">
+                <Users className="mr-2 h-4 w-4" />
+                View Website
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Common administrative tasks</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Button variant="outline" className="h-auto p-4 flex flex-col items-center gap-2" asChild>
-              <Link href="/admin/contacts">
-                <MessageSquare className="h-6 w-6" />
-                <span>Manage Contacts</span>
-              </Link>
-            </Button>
-            <Button variant="outline" className="h-auto p-4 flex flex-col items-center gap-2" asChild>
-              <Link href="/admin/bookings">
-                <Calendar className="h-6 w-6" />
-                <span>View Bookings</span>
-              </Link>
-            </Button>
-            <Button variant="outline" className="h-auto p-4 flex flex-col items-center gap-2" asChild>
-              <Link href="/admin/blog">
-                <FileText className="h-6 w-6" />
-                <span>Manage Blog</span>
-              </Link>
-            </Button>
-            <Button variant="outline" className="h-auto p-4 flex flex-col items-center gap-2" asChild>
-              <Link href="/admin/analytics">
-                <TrendingUp className="h-6 w-6" />
-                <span>View Analytics</span>
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* System Status */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-green-500" />
-            System Status
-          </CardTitle>
-          <CardDescription>All systems operational</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className="text-sm">Website Online</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className="text-sm">Email Service Active</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className="text-sm">Booking System Operational</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }
