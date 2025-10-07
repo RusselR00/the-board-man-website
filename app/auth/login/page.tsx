@@ -2,42 +2,56 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { signIn, useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
-import { AuthProvider, useAuth } from "@/components/admin/auth"
 
 function LoginForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
-  const { login, isLoading, user } = useAuth()
+  const [isLoading, setIsLoading] = useState(false)
+  const { data: session, status } = useSession()
   const router = useRouter()
 
   // If user is already authenticated, redirect to admin
   useEffect(() => {
-    if (user) {
+    if (status === "authenticated" && session?.user) {
       router.push("/admin")
     }
-  }, [user, router])
+  }, [session, status, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+    setIsLoading(true)
 
     if (!email || !password) {
       setError("Please enter both email and password")
+      setIsLoading(false)
       return
     }
 
-    const success = await login(email, password)
-    if (success) {
-      router.push("/admin")
-    } else {
-      setError("Invalid email or password")
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      })
+
+      if (result?.error) {
+        setError("Invalid email or password")
+      } else if (result?.ok) {
+        router.push("/admin")
+      }
+    } catch (error) {
+      setError("An error occurred during login")
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -102,9 +116,5 @@ function LoginForm() {
 }
 
 export default function AdminLoginPage() {
-  return (
-    <AuthProvider>
-      <LoginForm />
-    </AuthProvider>
-  )
+  return <LoginForm />
 }

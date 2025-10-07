@@ -1,6 +1,6 @@
 import { Metadata } from "next"
 import { AdminLayout } from "@/components/admin/layout"
-import { AuthProvider, ProtectedRoute } from "@/components/admin/auth"
+import { ProtectedAdminRoute } from "@/components/admin/protected-route"
 
 export const metadata: Metadata = {
   title: "Admin Dashboard | THE BOARD MAN",
@@ -17,12 +17,10 @@ export default function AdminRootLayout({
   children: React.ReactNode
 }) {
   return (
-    <AuthProvider>
-      <ProtectedRoute>
-        <AdminLayout>
-          {children}
-        </AdminLayout>
-      </ProtectedRoute>
-    </AuthProvider>
+    <ProtectedAdminRoute>
+      <AdminLayout>
+        {children}
+      </AdminLayout>
+    </ProtectedAdminRoute>
   )
 }
