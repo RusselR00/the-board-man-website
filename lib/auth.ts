@@ -8,8 +8,23 @@ if (!process.env.DATABASE_URL) {
   console.error('Missing DATABASE_URL environment variable')
 }
 
-if (!process.env.NEXTAUTH_SECRET && process.env.NODE_ENV === 'production') {
-  console.error('Missing NEXTAUTH_SECRET environment variable in production')
+if (!process.env.NEXTAUTH_SECRET) {
+  console.error('Missing NEXTAUTH_SECRET environment variable')
+}
+
+// Set NEXTAUTH_URL based on environment
+const getAuthUrl = () => {
+  if (process.env.NEXTAUTH_URL) {
+    return process.env.NEXTAUTH_URL
+  }
+  
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`
+  }
+  
+  return process.env.NODE_ENV === 'production' 
+    ? 'https://the-board-man-website.vercel.app'
+    : 'http://localhost:3000'
 }
 
 const sql = neon(process.env.DATABASE_URL!)
@@ -29,6 +44,8 @@ declare module "next-auth" {
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     Credentials({
       name: "credentials",
