@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { 
@@ -16,7 +16,8 @@ import {
   Star,
   Eye,
   ArrowRight,
-  ExternalLink
+  ExternalLink,
+  Loader2
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -38,155 +39,38 @@ import {
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 
-// Blog posts data
-const featuredPost = {
-  id: 1,
-  title: "UAE Corporate Tax: Complete Guide for 2025",
-  excerpt: "Everything you need to know about the new UAE corporate tax regulations, compliance requirements, and how they affect your business operations.",
-  content: "The UAE introduced federal corporate tax effective from June 1, 2023, marking a significant shift in the country's tax landscape...",
+interface BlogPost {
+  id: number
+  title: string
+  excerpt: string
   author: {
-    name: "Ahmed Al-Mansouri",
-    role: "Senior Tax Consultant",
-    avatar: "/images/authors/ahmed.jpg"
-  },
-  category: "Tax & Compliance",
-  publishDate: "2024-12-15",
-  readTime: "12 min read",
-  image: "/images/blog/uae-corporate-tax-2025.jpg",
-  tags: ["Corporate Tax", "UAE", "Compliance", "Business"],
-  featured: true,
-  views: 3247,
-  slug: "uae-corporate-tax-complete-guide-2025"
+    name: string
+    role: string
+    avatar?: string
+  }
+  category: string
+  publishDate: string
+  readTime: string
+  image: string
+  tags: string[]
+  featured: boolean
+  views: number
+  slug: string
 }
 
-const blogPosts = [
-  {
-    id: 2,
-    title: "Digital Transformation in Accounting: AI and Automation Trends",
-    excerpt: "How artificial intelligence and automation are revolutionizing accounting practices and what it means for modern businesses.",
-    author: {
-      name: "Sarah Johnson",
-      role: "Technology Advisor",
-      avatar: "/images/authors/sarah.jpg"
-    },
-    category: "Technology",
-    publishDate: "2024-12-10",
-    readTime: "8 min read",
-    image: "/images/blog/digital-transformation-accounting.jpg",
-    tags: ["AI", "Automation", "Digital", "Future"],
-    featured: false,
-    views: 1845,
-    slug: "digital-transformation-accounting-ai-automation"
-  },
-  {
-    id: 3,
-    title: "ESG Reporting Requirements in the UAE: A Comprehensive Overview",
-    excerpt: "Understanding Environmental, Social, and Governance reporting obligations and how to prepare your business for compliance.",
-    author: {
-      name: "Dr. Fatima Hassan",
-      role: "ESG Specialist",
-      avatar: "/images/authors/fatima.jpg"
-    },
-    category: "Compliance",
-    publishDate: "2024-12-05",
-    readTime: "10 min read",
-    image: "/images/blog/esg-reporting-uae.jpg",
-    tags: ["ESG", "Reporting", "Sustainability", "Compliance"],
-    featured: false,
-    views: 2156,
-    slug: "esg-reporting-requirements-uae-overview"
-  },
-  {
-    id: 4,
-    title: "Business Setup in Dubai: Free Zone vs Mainland Comparison",
-    excerpt: "Detailed analysis of the advantages and disadvantages of setting up your business in Dubai's free zones versus mainland.",
-    author: {
-      name: "Mohammed Ali",
-      role: "Business Setup Consultant",
-      avatar: "/images/authors/mohammed.jpg"
-    },
-    category: "Business Setup",
-    publishDate: "2024-11-28",
-    readTime: "15 min read",
-    image: "/images/blog/dubai-business-setup.jpg",
-    tags: ["Dubai", "Free Zone", "Mainland", "Setup"],
-    featured: false,
-    views: 2834,
-    slug: "dubai-business-setup-freezone-vs-mainland"
-  },
-  {
-    id: 5,
-    title: "VAT Compliance Best Practices for UAE Businesses",
-    excerpt: "Essential VAT compliance strategies, common mistakes to avoid, and tips for maintaining accurate records.",
-    author: {
-      name: "Ravi Sharma",
-      role: "VAT Specialist",
-      avatar: "/images/authors/ravi.jpg"
-    },
-    category: "Tax & Compliance",
-    publishDate: "2024-11-20",
-    readTime: "7 min read",
-    image: "/images/blog/vat-compliance-best-practices.jpg",
-    tags: ["VAT", "Compliance", "Best Practices", "UAE"],
-    featured: false,
-    views: 1687,
-    slug: "vat-compliance-best-practices-uae"
-  },
-  {
-    id: 6,
-    title: "Financial Planning Strategies for SMEs in the UAE",
-    excerpt: "Effective financial planning techniques specifically designed for small and medium enterprises operating in the UAE market.",
-    author: {
-      name: "Lisa Chen",
-      role: "Financial Advisor",
-      avatar: "/images/authors/lisa.jpg"
-    },
-    category: "Financial Planning",
-    publishDate: "2024-11-15",
-    readTime: "9 min read",
-    image: "/images/blog/sme-financial-planning.jpg",
-    tags: ["SME", "Financial Planning", "Strategy", "Growth"],
-    featured: false,
-    views: 1456,
-    slug: "financial-planning-strategies-smes-uae"
-  },
-  {
-    id: 7,
-    title: "IFRS 17 Implementation: Impact on UAE Insurance Companies",
-    excerpt: "Comprehensive guide to IFRS 17 implementation and its implications for insurance companies operating in the UAE.",
-    author: {
-      name: "David Kumar",
-      role: "IFRS Specialist",
-      avatar: "/images/authors/david.jpg"
-    },
-    category: "Standards",
-    publishDate: "2024-11-08",
-    readTime: "11 min read",
-    image: "/images/blog/ifrs17-implementation.jpg",
-    tags: ["IFRS", "Insurance", "Standards", "Implementation"],
-    featured: false,
-    views: 987,
-    slug: "ifrs17-implementation-uae-insurance-companies"
-  },
-  {
-    id: 8,
-    title: "Cybersecurity for Accounting Firms: Protecting Client Data",
-    excerpt: "Essential cybersecurity measures that accounting firms must implement to protect sensitive client financial information.",
-    author: {
-      name: "Alex Thompson",
-      role: "Cybersecurity Consultant",
-      avatar: "/images/authors/alex.jpg"
-    },
-    category: "Technology",
-    publishDate: "2024-10-30",
-    readTime: "6 min read",
-    image: "/images/blog/cybersecurity-accounting-firms.jpg",
-    tags: ["Cybersecurity", "Data Protection", "Security", "Technology"],
-    featured: false,
-    views: 1234,
-    slug: "cybersecurity-accounting-firms-protecting-client-data"
+interface BlogResponse {
+  success: boolean
+  data: {
+    posts: BlogPost[]
+    pagination: {
+      current: number
+      total: number
+      perPage: number
+      totalItems: number
+    }
   }
-]
+  error?: string
+}
 
 // Categories for filtering
 const categories = [
@@ -209,16 +93,63 @@ export default function BlogPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All Categories")
   const [sortBy, setSortBy] = useState("newest")
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([])
+  const [featuredPost, setFeaturedPost] = useState<BlogPost | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [pagination, setPagination] = useState({
+    current: 1,
+    total: 0,
+    perPage: 10,
+    totalItems: 0
+  })
 
-  // Filter and sort posts
+  useEffect(() => {
+    fetchBlogPosts()
+  }, [searchTerm, selectedCategory])
+
+  const fetchBlogPosts = async () => {
+    try {
+      setIsLoading(true)
+      const params = new URLSearchParams({
+        page: '1',
+        limit: '20'
+      })
+      
+      if (selectedCategory !== "All Categories") {
+        params.append('category', selectedCategory)
+      }
+      
+      if (searchTerm) {
+        params.append('search', searchTerm)
+      }
+
+      const response = await fetch(`/api/blog?${params}`)
+      const data: BlogResponse = await response.json()
+      
+      if (data.success) {
+        setBlogPosts(data.data.posts)
+        setPagination(data.data.pagination)
+        
+        // Set featured post (first post with featured: true, or first post if none featured)
+        const featured = data.data.posts.find(post => post.featured) || data.data.posts[0]
+        setFeaturedPost(featured || null)
+      } else {
+        console.error('Failed to fetch blog posts:', data.error)
+        setBlogPosts([])
+        setFeaturedPost(null)
+      }
+    } catch (error) {
+      console.error('Error fetching blog posts:', error)
+      setBlogPosts([])
+      setFeaturedPost(null)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Filter and sort posts (excluding featured post from regular list)
   const filteredPosts = blogPosts
-    .filter(post => {
-      const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           post.excerpt.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           post.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-      const matchesCategory = selectedCategory === "All Categories" || post.category === selectedCategory
-      return matchesSearch && matchesCategory
-    })
+    .filter(post => !featuredPost || post.id !== featuredPost.id)
     .sort((a, b) => {
       switch (sortBy) {
         case "newest":
@@ -242,6 +173,27 @@ export default function BlogPage() {
     })
   }
 
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold tracking-tight mb-4">
+            Insights & Updates
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            Stay informed with the latest insights, trends, and updates in accounting, 
+            taxation, and business management from our expert team.
+          </p>
+        </div>
+        
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading blog posts...</span>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header Section */}
@@ -256,76 +208,78 @@ export default function BlogPage() {
       </div>
 
       {/* Featured Post */}
-      <div className="mb-16">
-        <div className="flex items-center gap-2 mb-6">
-          <Star className="h-5 w-5 text-yellow-500" />
-          <h2 className="text-2xl font-bold">Featured Article</h2>
-        </div>
-        
-        <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-          <div className="md:flex">
-            <div className="md:w-1/2">
-              <div className="relative h-64 md:h-full">
-                <Image
-                  src={featuredPost.image}
-                  alt={featuredPost.title}
-                  fill
-                  className="object-cover"
-                />
-                <Badge className="absolute top-4 left-4 bg-yellow-500 text-black">
-                  Featured
-                </Badge>
-              </div>
-            </div>
-            <div className="md:w-1/2 p-6">
-              <div className="flex items-center gap-2 mb-3">
-                <Badge variant="outline">{featuredPost.category}</Badge>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    {formatDate(featuredPost.publishDate)}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    {featuredPost.readTime}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Eye className="h-4 w-4" />
-                    {featuredPost.views.toLocaleString()} views
-                  </div>
+      {featuredPost && (
+        <div className="mb-16">
+          <div className="flex items-center gap-2 mb-6">
+            <Star className="h-5 w-5 text-yellow-500" />
+            <h2 className="text-2xl font-bold">Featured Article</h2>
+          </div>
+          
+          <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+            <div className="md:flex">
+              <div className="md:w-1/2">
+                <div className="relative h-64 md:h-full">
+                  <Image
+                    src={featuredPost.image}
+                    alt={featuredPost.title}
+                    fill
+                    className="object-cover"
+                  />
+                  <Badge className="absolute top-4 left-4 bg-yellow-500 text-black">
+                    Featured
+                  </Badge>
                 </div>
               </div>
-              
-              <h3 className="text-2xl font-bold mb-3 leading-tight">
-                {featuredPost.title}
-              </h3>
-              
-              <p className="text-muted-foreground mb-4 line-clamp-3">
-                {featuredPost.excerpt}
-              </p>
-              
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                    <User className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-sm">{featuredPost.author.name}</p>
-                    <p className="text-xs text-muted-foreground">{featuredPost.author.role}</p>
+              <div className="md:w-1/2 p-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Badge variant="outline">{featuredPost.category}</Badge>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-4 w-4" />
+                      {formatDate(featuredPost.publishDate)}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4" />
+                      {featuredPost.readTime}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Eye className="h-4 w-4" />
+                      {featuredPost.views.toLocaleString()} views
+                    </div>
                   </div>
                 </div>
                 
-                <Button asChild>
-                  <Link href={`/blog/${featuredPost.slug}`}>
-                    Read Article
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
+                <h3 className="text-2xl font-bold mb-3 leading-tight">
+                  {featuredPost.title}
+                </h3>
+                
+                <p className="text-muted-foreground mb-4 line-clamp-3">
+                  {featuredPost.excerpt}
+                </p>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                      <User className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">{featuredPost.author.name}</p>
+                      <p className="text-xs text-muted-foreground">{featuredPost.author.role}</p>
+                    </div>
+                  </div>
+                  
+                  <Button asChild>
+                    <Link href={`/blog/${featuredPost.slug}`}>
+                      Read Article
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
-        </Card>
-      </div>
+          </Card>
+        </div>
+      )}
 
       {/* Search and Filters */}
       <div className="mb-8">
@@ -446,23 +400,28 @@ export default function BlogPage() {
             ))}
           </div>
 
-          {filteredPosts.length === 0 && (
+          {filteredPosts.length === 0 && !isLoading && (
             <div className="text-center py-12">
               <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No articles found</h3>
               <p className="text-muted-foreground">
-                Try adjusting your search criteria or browse all articles.
+                {blogPosts.length === 0 
+                  ? "No blog posts have been published yet. Check back soon for new content!"
+                  : "Try adjusting your search criteria or browse all articles."
+                }
               </p>
-              <Button 
-                variant="outline" 
-                className="mt-4"
-                onClick={() => {
-                  setSearchTerm("")
-                  setSelectedCategory("All Categories")
-                }}
-              >
-                Clear Filters
-              </Button>
+              {blogPosts.length > 0 && (
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={() => {
+                    setSearchTerm("")
+                    setSelectedCategory("All Categories")
+                  }}
+                >
+                  Clear Filters
+                </Button>
+              )}
             </div>
           )}
         </div>
