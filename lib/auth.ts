@@ -38,23 +38,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         try {
+          console.log('NextAuth authorize called')
+          
           if (!credentials?.email || !credentials?.password) {
-            console.log('Missing credentials')
+            console.log('Missing credentials in NextAuth')
             return null
           }
 
           const email = credentials.email as string
           const password = credentials.password as string
 
-          console.log('Attempting login for:', email)
-          
-          // Check if DATABASE_URL is available
-          if (!process.env.DATABASE_URL) {
-            console.error('DATABASE_URL environment variable is not set')
-            throw new Error('Database configuration missing')
-          }
-
-          console.log('Database URL configured, proceeding with query')
+          console.log('NextAuth: Attempting login for:', email)
           
           // Query the database for the user
           const users = await sql`
@@ -64,26 +58,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             LIMIT 1
           `
 
-          console.log('Database query result:', users.length > 0 ? 'User found' : 'No user found')
+          console.log('NextAuth: Database query result:', users.length > 0 ? 'User found' : 'No user found')
 
           if (users.length === 0) {
-            console.log('No user found with email:', email)
+            console.log('NextAuth: No user found with email:', email)
             return null
           }
 
           const user = users[0]
-          console.log('Found user:', user.email, 'with role:', user.role)
+          console.log('NextAuth: Found user:', user.email, 'with role:', user.role)
 
           // Verify the password
           const isPasswordValid = await bcrypt.compare(password, user.password_hash)
-          console.log('Password validation result:', isPasswordValid)
+          console.log('NextAuth: Password validation result:', isPasswordValid)
 
           if (!isPasswordValid) {
-            console.log('Invalid password for user:', email)
+            console.log('NextAuth: Invalid password for user:', email)
             return null
           }
 
-          console.log('Login successful for:', email)
+          console.log('NextAuth: Login successful for:', email)
           
           // Return user object (will be stored in JWT)
           return {
@@ -93,14 +87,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             role: user.role,
           }
         } catch (error) {
-          console.error('Auth error details:', {
+          console.error('NextAuth authorize error:', {
             message: error instanceof Error ? error.message : 'Unknown error',
-            stack: error instanceof Error ? error.stack : undefined,
-            name: error instanceof Error ? error.name : undefined,
-            email: credentials?.email,
-            timestamp: new Date().toISOString()
+            stack: error instanceof Error ? error.stack : undefined
           })
-          return null
+          throw error // Re-throw to see the actual error
         }
       }
     })
@@ -111,25 +102,37 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   callbacks: {
     async jwt({ token, user }) {
-      // Add user info to JWT token
-      if (user) {
-        token.role = user.role
-        token.id = user.id
+      try {
+        console.log('NextAuth JWT callback called')
+        if (user) {
+          token.role = user.role
+          token.id = user.id
+          console.log('NextAuth: JWT token updated with user data')
+        }
+        return token
+      } catch (error) {
+        console.error('NextAuth JWT callback error:', error)
+        throw error
       }
-      return token
     },
     async session({ session, token }) {
-      // Send properties to the client
-      if (token && session.user) {
-        session.user.id = token.id as string
-        session.user.role = token.role as string
+      try {
+        console.log('NextAuth session callback called')
+        if (token && session.user) {
+          session.user.id = token.id as string
+          session.user.role = token.role as string
+          console.log('NextAuth: Session updated with token data')
+        }
+        return session
+      } catch (error) {
+        console.error('NextAuth session callback error:', error)
+        throw error
       }
-      return session
     },
   },
   pages: {
     signIn: '/admin/login',
     error: '/admin/login',
   },
-  debug: process.env.NODE_ENV === 'development',
+  debug: true, // Enable debug mode in production
 })
