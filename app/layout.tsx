@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import { Layout } from '@/components/layout/layout'
+import { ConditionalLayout } from '@/components/layout/conditional-layout'
 import { CookieConsent } from '@/components/cookie-consent'
 import { AuthProvider } from '@/components/auth-provider'
+import { Toaster } from '@/components/ui/toaster'
 import { generateSEOMetadata, generateOrganizationSchema } from '@/lib/seo'
 import { StructuredData } from '@/components/seo/structured-data'
 
@@ -28,8 +29,9 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <AuthProvider>
-          <Layout>{children}</Layout>
+          <ConditionalLayout>{children}</ConditionalLayout>
           <CookieConsent />
+          <Toaster />
         </AuthProvider>
       </body>
     </html>

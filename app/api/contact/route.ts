@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { sql } from '@vercel/postgres'
+import { neon } from '@neondatabase/serverless'
 import { Resend } from 'resend'
 
 // Initialize Resend with fallback for build time
 const resend = new Resend(process.env.RESEND_API_KEY || 'dummy-key-for-build')
+const sql = neon(process.env.DATABASE_URL!)
 
 // Validation schema for contact form
 const ContactFormSchema = z.object({
@@ -15,7 +16,7 @@ const ContactFormSchema = z.object({
   subject: z.string().min(5, 'Subject must be at least 5 characters'),
   message: z.string().min(10, 'Message must be at least 10 characters'),
   serviceType: z.enum(['audit', 'tax', 'accounting', 'business-setup', 'consultation', 'other']),
-  preferredContact: z.enum(['email', 'phone', 'whatsapp']).default('email'),
+  preferredContact: z.enum(['email', 'phone', 'whatsapp', 'meeting']).default('email'),
   urgency: z.enum(['low', 'medium', 'high']).default('medium'),
 })
 
@@ -40,13 +41,13 @@ export async function POST(request: NextRequest) {
     const data = validationResult.data
 
     // Save to database
-    const { rows } = await sql`
-      INSERT INTO contacts (name, email, phone, company, subject, message, service_type, preferred_contact, urgency)
-      VALUES (${data.name}, ${data.email}, ${data.phone || ''}, ${data.company || ''}, ${data.subject}, ${data.message}, ${data.serviceType}, ${data.preferredContact}, ${data.urgency})
+    const result = await sql`
+      INSERT INTO contacts (name, email, phone, company, subject, message, service_type, preferred_contact, urgency, status)
+      VALUES (${data.name}, ${data.email}, ${data.phone || ''}, ${data.company || ''}, ${data.subject}, ${data.message}, ${data.serviceType}, ${data.preferredContact}, ${data.urgency}, 'pending')
       RETURNING id
     `
     
-    const contactId = rows[0]?.id
+    const contactId = result[0]?.id
 
     console.log('Contact form submission saved to database:', {
       id: contactId,

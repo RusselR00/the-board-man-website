@@ -3,12 +3,27 @@ import { neon } from '@neondatabase/serverless'
 
 const sql = neon(process.env.DATABASE_URL!)
 
+// Function to get a consistent placeholder image based on post ID
+function getPlaceholderImage(postId: number): string {
+  const placeholderImages = [
+    '/images/blog/placeholder-1.jpg',
+    '/images/blog/placeholder-2.jpg',
+    '/images/blog/placeholder-3.jpg',
+    '/images/blog/placeholder-4.jpg',
+    '/images/blog/placeholder-5.jpg'
+  ]
+  
+  // Use post ID to consistently assign the same image to the same post
+  const imageIndex = postId % placeholderImages.length
+  return placeholderImages[imageIndex]
+}
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  context: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const { slug } = params
+    const { slug } = await context.params
 
     // Get the blog post
     const result = await sql`
@@ -17,18 +32,12 @@ export async function GET(
         title,
         content,
         excerpt,
-        author,
+        author_name as author,
         category,
         status,
-        published_date,
-        featured_image,
-        tags,
-        reading_time,
+        created_at as published_date,
         slug,
-        view_count,
-        featured,
-        seo_title,
-        seo_description
+        featured
       FROM blog_posts 
       WHERE slug = ${slug} AND status = 'published'
       LIMIT 1
@@ -43,12 +52,12 @@ export async function GET(
 
     const post = result[0]
 
-    // Increment view count
-    await sql`
-      UPDATE blog_posts 
-      SET view_count = COALESCE(view_count, 0) + 1 
-      WHERE id = ${post.id}
-    `
+    // Increment view count (skip for now since view_count column doesn't exist)
+    // await sql`
+    //   UPDATE blog_posts 
+    //   SET view_count = COALESCE(view_count, 0) + 1 
+    //   WHERE id = ${post.id}
+    // `
 
     // Transform the data to match the expected format
     const transformedPost = {
@@ -56,17 +65,17 @@ export async function GET(
       title: post.title,
       content: post.content,
       excerpt: post.excerpt,
-      author: typeof post.author === 'string' ? JSON.parse(post.author) : post.author,
+      author: post.author || 'Admin User',
       category: post.category,
       publishDate: post.published_date,
-      readTime: post.reading_time || '5 min read',
-      image: post.featured_image || '/images/blog/default.jpg',
-      tags: Array.isArray(post.tags) ? post.tags : (post.tags ? JSON.parse(post.tags) : []),
+      readTime: '5 min read', // Default value since reading_time doesn't exist
+      image: getPlaceholderImage(post.id), // Assign placeholder image based on post ID
+      tags: [], // Default value since tags doesn't exist
       featured: post.featured || false,
-      views: (post.view_count || 0) + 1, // Include the increment
+      views: 0, // Default value since view_count doesn't exist
       slug: post.slug,
-      seoTitle: post.seo_title,
-      seoDescription: post.seo_description
+      seoTitle: post.title, // Use title as fallback since seo_title doesn't exist
+      seoDescription: post.excerpt // Use excerpt as fallback since seo_description doesn't exist
     }
 
     return NextResponse.json({

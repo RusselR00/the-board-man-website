@@ -3,6 +3,21 @@ import { neon } from '@neondatabase/serverless'
 
 const sql = neon(process.env.DATABASE_URL!)
 
+// Function to get a consistent placeholder image based on post ID
+function getPlaceholderImage(postId: number): string {
+  const placeholderImages = [
+    '/images/blog/placeholder-1.jpg',
+    '/images/blog/placeholder-2.jpg',
+    '/images/blog/placeholder-3.jpg',
+    '/images/blog/placeholder-4.jpg',
+    '/images/blog/placeholder-5.jpg'
+  ]
+  
+  // Use post ID to consistently assign the same image to the same post
+  const imageIndex = postId % placeholderImages.length
+  return placeholderImages[imageIndex]
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -20,15 +35,15 @@ export async function GET(request: NextRequest) {
       // Both category and search filters
       posts = await sql`
         SELECT 
-          id, title, excerpt, author, category, status, published_date, 
-          featured_image, tags, reading_time, slug, view_count, featured
+          id, title, excerpt, author_name as author, category, status, created_at as published_date, 
+          slug, featured
         FROM blog_posts 
         WHERE status = 'published' 
           AND category = ${category}
-          AND (title ILIKE ${`%${search}%`} OR excerpt ILIKE ${`%${search}%`} OR content ILIKE ${`%${search}%`} OR tags::text ILIKE ${`%${search}%`})
+          AND (title ILIKE ${`%${search}%`} OR excerpt ILIKE ${`%${search}%`} OR content ILIKE ${`%${search}%`})
         ORDER BY 
           CASE WHEN featured = true THEN 0 ELSE 1 END,
-          published_date DESC 
+          created_at DESC 
         LIMIT ${limit} OFFSET ${offset}
       `
       
@@ -37,7 +52,7 @@ export async function GET(request: NextRequest) {
         FROM blog_posts 
         WHERE status = 'published' 
           AND category = ${category}
-          AND (title ILIKE ${`%${search}%`} OR excerpt ILIKE ${`%${search}%`} OR content ILIKE ${`%${search}%`} OR tags::text ILIKE ${`%${search}%`})
+          AND (title ILIKE ${`%${search}%`} OR excerpt ILIKE ${`%${search}%`} OR content ILIKE ${`%${search}%`})
       `
       total = parseInt(countResult[0]?.total || '0')
       
@@ -45,13 +60,13 @@ export async function GET(request: NextRequest) {
       // Only category filter
       posts = await sql`
         SELECT 
-          id, title, excerpt, author, category, status, published_date, 
-          featured_image, tags, reading_time, slug, view_count, featured
+          id, title, excerpt, author_name as author, category, status, created_at as published_date, 
+          slug, featured
         FROM blog_posts 
         WHERE status = 'published' AND category = ${category}
         ORDER BY 
           CASE WHEN featured = true THEN 0 ELSE 1 END,
-          published_date DESC 
+          created_at DESC 
         LIMIT ${limit} OFFSET ${offset}
       `
       
@@ -66,14 +81,14 @@ export async function GET(request: NextRequest) {
       // Only search filter
       posts = await sql`
         SELECT 
-          id, title, excerpt, author, category, status, published_date, 
-          featured_image, tags, reading_time, slug, view_count, featured
+          id, title, excerpt, author_name as author, category, status, created_at as published_date, 
+          slug, featured
         FROM blog_posts 
         WHERE status = 'published' 
-          AND (title ILIKE ${`%${search}%`} OR excerpt ILIKE ${`%${search}%`} OR content ILIKE ${`%${search}%`} OR tags::text ILIKE ${`%${search}%`})
+          AND (title ILIKE ${`%${search}%`} OR excerpt ILIKE ${`%${search}%`} OR content ILIKE ${`%${search}%`})
         ORDER BY 
           CASE WHEN featured = true THEN 0 ELSE 1 END,
-          published_date DESC 
+          created_at DESC 
         LIMIT ${limit} OFFSET ${offset}
       `
       
@@ -81,7 +96,7 @@ export async function GET(request: NextRequest) {
         SELECT COUNT(*) as total 
         FROM blog_posts 
         WHERE status = 'published' 
-          AND (title ILIKE ${`%${search}%`} OR excerpt ILIKE ${`%${search}%`} OR content ILIKE ${`%${search}%`} OR tags::text ILIKE ${`%${search}%`})
+          AND (title ILIKE ${`%${search}%`} OR excerpt ILIKE ${`%${search}%`} OR content ILIKE ${`%${search}%`})
       `
       total = parseInt(countResult[0]?.total || '0')
       
@@ -89,13 +104,13 @@ export async function GET(request: NextRequest) {
       // No filters
       posts = await sql`
         SELECT 
-          id, title, excerpt, author, category, status, published_date, 
-          featured_image, tags, reading_time, slug, view_count, featured
+          id, title, excerpt, author_name as author, category, status, created_at as published_date, 
+          slug, featured
         FROM blog_posts 
         WHERE status = 'published'
         ORDER BY 
           CASE WHEN featured = true THEN 0 ELSE 1 END,
-          published_date DESC 
+          created_at DESC 
         LIMIT ${limit} OFFSET ${offset}
       `
       
@@ -112,14 +127,14 @@ export async function GET(request: NextRequest) {
       id: post.id,
       title: post.title,
       excerpt: post.excerpt,
-      author: typeof post.author === 'string' ? JSON.parse(post.author) : post.author,
+      author: post.author || 'Admin User',
       category: post.category,
       publishDate: post.published_date,
-      readTime: post.reading_time || '5 min read',
-      image: post.featured_image || '/images/blog/default.jpg',
-      tags: Array.isArray(post.tags) ? post.tags : (post.tags ? JSON.parse(post.tags) : []),
+      readTime: '5 min read', // Default value since reading_time doesn't exist
+      image: getPlaceholderImage(post.id), // Assign different placeholder images based on post ID
+      tags: [], // Default value since tags doesn't exist
       featured: post.featured || false,
-      views: post.view_count || 0,
+      views: 0, // Default value since view_count doesn't exist
       slug: post.slug
     }))
 
@@ -157,17 +172,14 @@ export async function getFeaturedPost() {
         id,
         title,
         excerpt,
-        author,
+        author_name as author,
         category,
-        published_date,
-        featured_image,
-        tags,
-        reading_time,
+        created_at as published_date,
         slug,
-        view_count
+        featured
       FROM blog_posts 
       WHERE status = 'published' AND featured = true
-      ORDER BY published_date DESC
+      ORDER BY created_at DESC
       LIMIT 1
     `
 
@@ -178,17 +190,14 @@ export async function getFeaturedPost() {
           id,
           title,
           excerpt,
-          author,
+          author_name as author,
           category,
-          published_date,
-          featured_image,
-          tags,
-          reading_time,
+          created_at as published_date,
           slug,
-          view_count
+          featured
         FROM blog_posts 
         WHERE status = 'published'
-        ORDER BY published_date DESC
+        ORDER BY created_at DESC
         LIMIT 1
       `
       

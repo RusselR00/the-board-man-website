@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -83,11 +83,7 @@ export default function BookingsPage() {
   const [statusFilter, setStatusFilter] = useState("all")
   const [serviceFilter, setServiceFilter] = useState("all")
 
-  useEffect(() => {
-    fetchBookings()
-  }, [statusFilter])
-
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     try {
       setIsLoading(true)
       const response = await adminApi.getBookings(1, 50, statusFilter)
@@ -102,7 +98,11 @@ export default function BookingsPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [statusFilter])
+
+  useEffect(() => {
+    fetchBookings()
+  }, [fetchBookings])
 
   const updateBookingStatus = async (id: number, newStatus: string) => {
     try {

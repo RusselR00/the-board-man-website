@@ -28,6 +28,8 @@ import {
   Home,
   TrendingUp,
   PenTool,
+  Database,
+  Upload,
 } from "lucide-react"
 
 const navigation = [
@@ -54,6 +56,11 @@ const navigation = [
     icon: PenTool,
   },
   {
+    name: "Resources",
+    href: "/admin/resources",
+    icon: FileText,
+  },
+  {
     name: "Clients",
     href: "/admin/clients",
     icon: Users,
@@ -62,6 +69,16 @@ const navigation = [
     name: "Analytics",
     href: "/admin/analytics",
     icon: TrendingUp,
+  },
+  {
+    name: "Database Setup",
+    href: "/admin/database",
+    icon: Database,
+  },
+  {
+    name: "File Upload Test",
+    href: "/admin/file-test",
+    icon: Upload,
   },
   {
     name: "Settings",

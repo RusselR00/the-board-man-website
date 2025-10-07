@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { neon } from '@neondatabase/serverless'
+
+const sql = neon(process.env.DATABASE_URL!)
 
 // Validation schema for booking form
 const BookingFormSchema = z.object({
   // Personal Information
-  name: z.string().min(2, 'Name must be at least 2 characters'),
+  firstName: z.string().min(2, 'First name must be at least 2 characters'),
+  lastName: z.string().min(2, 'Last name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
   phone: z.string().min(10, 'Please enter a valid phone number'),
   company: z.string().optional(),
@@ -14,7 +18,7 @@ const BookingFormSchema = z.object({
   serviceDescription: z.string().min(10, 'Please provide more details about your service needs'),
   
   // Meeting Preferences
-  meetingType: z.enum(['in-person', 'video-call', 'phone-call']),
+  meetingType: z.enum(['in-person', 'virtual', 'phone']),
   preferredDate: z.string().refine((date) => {
     const selectedDate = new Date(date)
     const today = new Date()
@@ -22,8 +26,6 @@ const BookingFormSchema = z.object({
     return selectedDate >= today
   }, 'Please select a future date'),
   preferredTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Please enter a valid time'),
-  alternativeDate: z.string().optional(),
-  alternativeTime: z.string().optional(),
   
   // Additional Information
   urgency: z.enum(['low', 'medium', 'high']).default('medium'),
@@ -72,29 +74,46 @@ export async function POST(request: NextRequest) {
     // Generate booking reference
     const bookingReference = generateBookingReference()
 
-    // Log the booking (in production, you'd save to database)
-    console.log('Booking form submission:', {
-      timestamp: new Date().toISOString(),
-      reference: bookingReference,
-      name: data.name,
-      email: data.email,
-      serviceType: data.serviceType,
-      preferredDate: data.preferredDate,
-      preferredTime: data.preferredTime,
-      meetingType: data.meetingType,
-      urgency: data.urgency,
-    })
+    // Save to database
+    try {
+      const fullName = `${data.firstName} ${data.lastName}`
+      await sql`
+        INSERT INTO bookings (
+          reference, name, email, phone, company, service_type, service_description,
+          meeting_type, preferred_date, preferred_time, urgency, estimated_duration,
+          additional_notes, preferred_contact, send_reminders
+        ) VALUES (
+          ${bookingReference}, ${fullName}, ${data.email}, ${data.phone}, 
+          ${data.company || null}, ${data.serviceType}, ${data.serviceDescription},
+          ${data.meetingType}, ${data.preferredDate}, ${data.preferredTime},
+          ${data.urgency}, ${data.estimatedDuration}, ${data.additionalNotes || null},
+          ${data.preferredContact}, ${data.sendReminders}
+        )
+      `
 
-    // Here you would typically:
-    // 1. Save to database
-    // 2. Block the time slot in calendar
-    // 3. Send confirmation email to client
-    // 4. Send notification to team
-    // 5. Create calendar invite
-    // 6. Set up reminders
+      console.log('Booking saved to database:', {
+        reference: bookingReference,
+        name: fullName,
+        email: data.email,
+        serviceType: data.serviceType,
+        preferredDate: data.preferredDate,
+        preferredTime: data.preferredTime,
+        meetingType: data.meetingType,
+        urgency: data.urgency,
+      })
 
-    // Simulate booking process
-    await processBooking(data, bookingReference)
+    } catch (dbError) {
+      console.error('Database error:', dbError)
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Failed to save booking. Please try again or contact us directly.' 
+        },
+        { status: 500 }
+      )
+    }
+
+    // Send confirmation email and notifications
     await sendBookingConfirmation(data, bookingReference)
     await notifyTeam(data, bookingReference)
 
@@ -151,8 +170,8 @@ async function checkTimeSlotAvailability(date: string, time: string): Promise<bo
     return false
   }
   
-  // Simulate random unavailability (10% chance)
-  return Math.random() > 0.1
+  // Time slot is available
+  return true
 }
 
 // Get suggested time slots if preferred time is not available
@@ -197,9 +216,10 @@ async function processBooking(data: z.infer<typeof BookingFormSchema>, reference
   // 3. Block time slot
   // 4. Set up automated reminders
   
+  const fullName = `${data.firstName} ${data.lastName}`
   console.log('📅 Processing booking:', {
     reference,
-    client: data.name,
+    client: fullName,
     datetime: `${data.preferredDate} ${data.preferredTime}`,
     service: data.serviceType,
     type: data.meetingType
@@ -213,8 +233,9 @@ async function processBooking(data: z.infer<typeof BookingFormSchema>, reference
 
 // Send booking confirmation to client
 async function sendBookingConfirmation(data: z.infer<typeof BookingFormSchema>, reference: string) {
+  const fullName = `${data.firstName} ${data.lastName}`
   const confirmationContent = `
-    Dear ${data.name},
+    Dear ${fullName},
     
     Your appointment has been successfully booked with THE BOARD MAN!
     
@@ -231,7 +252,7 @@ async function sendBookingConfirmation(data: z.infer<typeof BookingFormSchema>, 
     ==================
     ${data.meetingType === 'in-person' ? 
       '📍 Our office address: 12A01, DAMAC XL Tower, Business Bay, Dubai, UAE' :
-      data.meetingType === 'video-call' ?
+      data.meetingType === 'virtual' ?
       '💻 We will send you a video call link 30 minutes before the meeting' :
       '📞 We will call you on the provided number: ' + data.phone
     }
@@ -262,11 +283,12 @@ async function sendBookingConfirmation(data: z.infer<typeof BookingFormSchema>, 
 
 // Notify team about new booking
 async function notifyTeam(data: z.infer<typeof BookingFormSchema>, reference: string) {
+  const fullName = `${data.firstName} ${data.lastName}`
   const teamNotification = `
     🆕 NEW APPOINTMENT BOOKED
     
     Reference: ${reference}
-    Client: ${data.name}
+    Client: ${fullName}
     Email: ${data.email}
     Phone: ${data.phone}
     Company: ${data.company || 'Not provided'}

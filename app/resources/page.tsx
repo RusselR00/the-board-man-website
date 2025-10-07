@@ -222,8 +222,16 @@ const businessCalculators = [
     description: "Project your business cash flow scenarios",
     icon: TrendingUp,
     color: "bg-orange-100 text-orange-600",
-    available: false,
+    available: true,
     href: "/tools/cash-flow-projector"
+  },
+  {
+    title: "ROI Calculator",
+    description: "Calculate return on investment for projects and campaigns",
+    icon: TrendingUp,
+    color: "bg-emerald-100 text-emerald-600",
+    available: true,
+    href: "/tools/roi-calculator"
   }
 ]
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -132,11 +132,7 @@ export default function SettingsPage() {
   const [hasChanges, setHasChanges] = useState(false)
   const { toast } = useToast()
 
-  useEffect(() => {
-    loadSettings()
-  }, [])
-
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     try {
       setIsLoading(true)
       // For now, use default settings since we don't have a settings API endpoint
@@ -151,7 +147,11 @@ export default function SettingsPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [toast])
+
+  useEffect(() => {
+    loadSettings()
+  }, [loadSettings])
 
   const saveSettings = async () => {
     try {
@@ -268,7 +268,7 @@ export default function SettingsPage() {
       {hasChanges && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <p className="text-sm text-yellow-800">
-            You have unsaved changes. Don't forget to save your settings.
+            You have unsaved changes. Don&apos;t forget to save your settings.
           </p>
         </div>
       )}

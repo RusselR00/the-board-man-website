@@ -137,16 +137,43 @@ export default function ContactPage() {
   const onSubmit = async (data: ContactFormData) => {
     setIsSubmitting(true)
     try {
-      // Here you would typically send the data to your API
-      console.log('Contact form submitted:', data)
+      // Transform the form data to match the API expectations
+      const apiData = {
+        name: `${data.firstName} ${data.lastName}`,
+        email: data.email,
+        phone: data.phone,
+        company: data.company || '',
+        subject: data.subject,
+        message: data.message,
+        serviceType: data.serviceType,
+        preferredContact: data.preferredContact,
+        urgency: 'medium' // Default urgency
+      }
+
+      console.log('Submitting contact form:', apiData)
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      setIsSubmitted(true)
-      form.reset()
+      // Send data to the contact API
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(apiData),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        console.log('Contact form submitted successfully:', result)
+        setIsSubmitted(true)
+        form.reset()
+      } else {
+        console.error('Contact form submission failed:', result)
+        throw new Error(result.error || 'Failed to submit form')
+      }
     } catch (error) {
       console.error('Error submitting form:', error)
+      // You might want to show an error message to the user here
     } finally {
       setIsSubmitting(false)
     }

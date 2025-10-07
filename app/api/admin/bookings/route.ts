@@ -16,7 +16,13 @@ export async function GET(request: NextRequest) {
     
     if (status && status !== 'all') {
       bookings = await sql`
-        SELECT * FROM bookings 
+        SELECT 
+          id, reference, name, email, phone, company, 
+          service_type as service, service_description, meeting_type,
+          preferred_date, preferred_time, urgency, estimated_duration as duration,
+          additional_notes as message, preferred_contact, send_reminders,
+          status, created_at, updated_at
+        FROM bookings 
         WHERE status = ${status}
         ORDER BY created_at DESC 
         LIMIT ${limit} OFFSET ${offset}
@@ -26,7 +32,13 @@ export async function GET(request: NextRequest) {
       `
     } else {
       bookings = await sql`
-        SELECT * FROM bookings 
+        SELECT 
+          id, reference, name, email, phone, company, 
+          service_type as service, service_description, meeting_type,
+          preferred_date, preferred_time, urgency, estimated_duration as duration,
+          additional_notes as message, preferred_contact, send_reminders,
+          status, created_at, updated_at
+        FROM bookings 
         ORDER BY created_at DESC 
         LIMIT ${limit} OFFSET ${offset}
       `

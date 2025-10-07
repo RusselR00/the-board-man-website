@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { 
@@ -103,11 +103,7 @@ export default function BlogPage() {
     totalItems: 0
   })
 
-  useEffect(() => {
-    fetchBlogPosts()
-  }, [searchTerm, selectedCategory])
-
-  const fetchBlogPosts = async () => {
+  const fetchBlogPosts = useCallback(async () => {
     try {
       setIsLoading(true)
       const params = new URLSearchParams({
@@ -134,18 +130,22 @@ export default function BlogPage() {
         const featured = data.data.posts.find(post => post.featured) || data.data.posts[0]
         setFeaturedPost(featured || null)
       } else {
-        console.error('Failed to fetch blog posts:', data.error)
+        // Handle API error gracefully
         setBlogPosts([])
         setFeaturedPost(null)
       }
     } catch (error) {
-      console.error('Error fetching blog posts:', error)
+      // Handle network or other errors gracefully
       setBlogPosts([])
       setFeaturedPost(null)
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [searchTerm, selectedCategory])
+
+  useEffect(() => {
+    fetchBlogPosts()
+  }, [fetchBlogPosts])
 
   // Filter and sort posts (excluding featured post from regular list)
   const filteredPosts = blogPosts

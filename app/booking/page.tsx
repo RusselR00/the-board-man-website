@@ -102,23 +102,85 @@ export default function BookingPage() {
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
     defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      company: "",
+      appointmentDate: new Date(), // Provide a default date to avoid undefined
+      appointmentTime: "",
+      serviceType: "",
+      description: "",
       urgency: "medium",
       consultationType: "in-person",
     },
+    mode: "onChange", // This helps with controlled inputs
   })
 
   const onSubmit = async (data: BookingFormValues) => {
     setIsSubmitting(true)
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Validate required fields
+      if (!data.appointmentDate) {
+        alert('Please select an appointment date')
+        return
+      }
       
-      console.log("Booking submitted:", data)
+      if (!data.appointmentTime) {
+        alert('Please select an appointment time')
+        return
+      }
+      
+      if (!data.serviceType) {
+        alert('Please select a service type')
+        return
+      }
+
+      // Prepare the data for the API
+      const bookingData = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        phone: data.phone,
+        company: data.company || '',
+        serviceType: data.serviceType,
+        serviceDescription: data.description,
+        meetingType: data.consultationType,
+        preferredDate: data.appointmentDate ? format(data.appointmentDate, 'yyyy-MM-dd') : '',
+        preferredTime: data.appointmentTime,
+        urgency: data.urgency,
+        estimatedDuration: '1-hour',
+        additionalNotes: '',
+        preferredContact: 'email',
+        sendReminders: true,
+      }
+
+      console.log("Submitting booking data:", bookingData)
+
+      // Call the booking API
+      const response = await fetch('/api/booking', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bookingData),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to submit booking')
+      }
+
+      console.log("Booking API response:", result)
       setIsSubmitted(true)
       form.reset()
     } catch (error) {
       console.error("Booking submission error:", error)
+      // You might want to show an error message to the user here
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      alert(`Failed to submit booking: ${errorMessage}`)
     } finally {
       setIsSubmitting(false)
     }
