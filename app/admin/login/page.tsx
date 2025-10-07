@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { signIn, getSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,23 +22,25 @@ export default function AdminLoginPage() {
     setError("")
 
     try {
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
       })
 
-      if (result?.error) {
-        setError("Invalid email or password")
+      const data = await response.json()
+
+      if (data.success) {
+        // Login successful, redirect to admin panel
+        router.push("/admin")
+        router.refresh()
       } else {
-        // Check session to ensure login was successful
-        const session = await getSession()
-        if (session?.user) {
-          router.push("/admin")
-          router.refresh()
-        }
+        setError(data.error || "Login failed")
       }
     } catch (error) {
+      console.error("Login error:", error)
       setError("An error occurred during login")
     } finally {
       setIsLoading(false)
