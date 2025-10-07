@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, createContext, useContext, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -207,6 +208,13 @@ export function LoginForm() {
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push('/auth/login')
+    }
+  }, [user, isLoading, router])
 
   if (isLoading) {
     return (
@@ -220,7 +228,14 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
-    return <LoginForm />
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Shield className="h-8 w-8 text-primary mx-auto mb-2" />
+          <p>Redirecting to login...</p>
+        </div>
+      </div>
+    )
   }
 
   return <>{children}</>
