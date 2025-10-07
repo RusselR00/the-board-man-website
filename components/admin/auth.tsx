@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true)
     
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('/api/admin/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (data.success && data.user) {
         const adminUser: AdminUser = {
-          id: data.user.id,
+          id: data.user.id.toString(),
           email: data.user.email,
           name: data.user.name,
           role: data.user.role
@@ -74,7 +74,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         setUser(adminUser)
         localStorage.setItem('admin-user', JSON.stringify(adminUser))
-        localStorage.setItem('admin-token', email) // Simple token for API calls
         return true
       }
       
@@ -88,17 +87,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const logout = async () => {
+    setUser(null)
+    localStorage.removeItem('admin-user')
+    
+    // Clear the cookie by making a request
     try {
-      await fetch('/api/auth/logout', {
+      await fetch('/api/admin/logout', {
         method: 'POST',
       })
     } catch (error) {
-      console.error('Logout error:', error)
+      // Ignore logout errors
+      console.log('Logout cleanup')
     }
-    
-    setUser(null)
-    localStorage.removeItem('admin-user')
-    localStorage.removeItem('admin-token')
   }
 
   return (
