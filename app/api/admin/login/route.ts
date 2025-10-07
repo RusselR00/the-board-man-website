@@ -39,9 +39,18 @@ export async function POST(request: Request) {
     const user = users[0]
 
     // Verify the password
+    console.log('Password verification:', {
+      inputPassword: password,
+      storedHash: user.password_hash,
+      comparison: 'testing...'
+    })
+    
     const isPasswordValid = await bcrypt.compare(password, user.password_hash)
+    
+    console.log('Password validation result:', isPasswordValid)
 
     if (!isPasswordValid) {
+      console.log('Password validation failed for user:', email)
       return NextResponse.json({ 
         success: false, 
         error: 'Invalid credentials' 
