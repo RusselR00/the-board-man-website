@@ -30,6 +30,7 @@ interface DashboardStats {
     pending: number
     confirmed: number
     completed: number
+    cancelled: number
     thisWeek: number
   }
   recentActivity: Array<{
@@ -62,7 +63,7 @@ export default function AdminDashboard() {
         // Fallback to demo data
         setDashboardStats({
           contacts: { total: 127, pending: 45, responded: 82, thisWeek: 12 },
-          bookings: { total: 24, pending: 8, confirmed: 12, completed: 4, thisWeek: 5 },
+          bookings: { total: 24, pending: 8, confirmed: 12, completed: 4, cancelled: 0, thisWeek: 5 },
           recentActivity: [
             {
               type: 'contact',

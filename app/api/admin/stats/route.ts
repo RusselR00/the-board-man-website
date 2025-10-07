@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
         COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending,
         COUNT(CASE WHEN status = 'confirmed' THEN 1 END) as confirmed,
         COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed,
+        COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as cancelled,
         COUNT(CASE WHEN created_at >= CURRENT_DATE - INTERVAL '7 days' THEN 1 END) as this_week
       FROM bookings
     `
@@ -78,6 +79,7 @@ export async function GET(request: NextRequest) {
           pending: parseInt(bookingStats[0].pending) || 0,
           confirmed: parseInt(bookingStats[0].confirmed) || 0,
           completed: parseInt(bookingStats[0].completed) || 0,
+          cancelled: parseInt(bookingStats[0].cancelled) || 0,
           thisWeek: parseInt(bookingStats[0].this_week) || 0,
         },
         recentActivity,
