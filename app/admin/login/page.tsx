@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,42 +8,36 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
+import { AuthProvider, useAuth } from "@/components/admin/auth"
 
-export default function AdminLoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  const { login, isLoading, user } = useAuth()
   const router = useRouter()
+
+  // If user is already authenticated, redirect to admin
+  useEffect(() => {
+    if (user) {
+      router.push("/admin")
+    }
+  }, [user, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
     setError("")
 
-    try {
-      const response = await fetch("/api/admin/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      })
+    if (!email || !password) {
+      setError("Please enter both email and password")
+      return
+    }
 
-      const data = await response.json()
-
-      if (data.success) {
-        // Login successful, redirect to admin panel
-        router.push("/admin")
-        router.refresh()
-      } else {
-        setError(data.error || "Login failed")
-      }
-    } catch (error) {
-      console.error("Login error:", error)
-      setError("An error occurred during login")
-    } finally {
-      setIsLoading(false)
+    const success = await login(email, password)
+    if (success) {
+      router.push("/admin")
+    } else {
+      setError("Invalid email or password")
     }
   }
 
@@ -104,5 +98,13 @@ export default function AdminLoginPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function AdminLoginPage() {
+  return (
+    <AuthProvider>
+      <LoginForm />
+    </AuthProvider>
   )
 }
