@@ -3,7 +3,7 @@ import { neon } from '@neondatabase/serverless'
 
 export async function GET() {
   try {
-    console.log('Testing database connection...')
+    console.log('Testing database connection and environment variables...')
     
     // Check if DATABASE_URL exists
     if (!process.env.DATABASE_URL) {
