@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { signIn, useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,13 +17,17 @@ function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const { data: session, status } = useSession()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  
+  const callbackUrl = searchParams.get('callbackUrl') || '/admin'
 
-  // If user is already authenticated, redirect to admin
+  // If user is already authenticated, redirect
   useEffect(() => {
     if (status === "authenticated" && session?.user) {
-      router.push("/admin")
+      console.log('User already authenticated, redirecting to:', callbackUrl)
+      router.push(callbackUrl)
     }
-  }, [session, status, router])
+  }, [session, status, router, callbackUrl])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,22 +41,40 @@ function LoginForm() {
     }
 
     try {
+      console.log('Attempting login with:', { email, callbackUrl })
+      
       const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
+        callbackUrl
       })
+
+      console.log('SignIn result:', result)
 
       if (result?.error) {
         setError("Invalid email or password")
+        console.error('Login error:', result.error)
       } else if (result?.ok) {
-        router.push("/admin")
+        console.log('Login successful, redirecting to:', callbackUrl)
+        router.push(callbackUrl)
+        router.refresh() // Force a refresh to update middleware
       }
     } catch (error) {
+      console.error('Login exception:', error)
       setError("An error occurred during login")
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // Show loading if we're checking authentication status
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    )
   }
 
   return (

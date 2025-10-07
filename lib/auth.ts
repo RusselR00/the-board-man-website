@@ -118,34 +118,56 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     maxAge: 24 * 60 * 60, // 24 hours
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       try {
-        console.log('NextAuth JWT callback called')
+        console.log('NextAuth JWT callback called with:', { hasUser: !!user, hasToken: !!token, hasAccount: !!account })
+        
         if (user) {
-          token.role = user.role
+          // First time login - add user data to token
           token.id = user.id
-          console.log('NextAuth: JWT token updated with user data')
+          token.role = user.role
+          token.email = user.email
+          token.name = user.name
+          console.log('NextAuth: JWT token updated with user data:', { id: token.id, role: token.role, email: token.email })
         }
+        
         return token
       } catch (error) {
         console.error('NextAuth JWT callback error:', error)
-        throw error
+        return token // Return token even if there's an error to prevent auth failure
       }
     },
     async session({ session, token }) {
       try {
-        console.log('NextAuth session callback called')
+        console.log('NextAuth session callback called with:', { hasSession: !!session, hasToken: !!token })
+        
         if (token && session.user) {
+          // Add token data to session
           session.user.id = token.id as string
           session.user.role = token.role as string
-          console.log('NextAuth: Session updated with token data')
+          session.user.email = token.email as string
+          session.user.name = token.name as string
+          console.log('NextAuth: Session updated with token data:', { id: session.user.id, role: session.user.role })
         }
+        
         return session
       } catch (error) {
         console.error('NextAuth session callback error:', error)
-        throw error
+        return session // Return session even if there's an error
       }
     },
+    async redirect({ url, baseUrl }) {
+      console.log('NextAuth redirect callback:', { url, baseUrl })
+      
+      // Handle redirects after login
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`
+      } else if (new URL(url).origin === baseUrl) {
+        return url
+      }
+      
+      return `${baseUrl}/admin`
+    }
   },
   pages: {
     signIn: '/auth/login',
