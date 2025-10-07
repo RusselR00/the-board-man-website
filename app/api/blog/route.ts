@@ -35,14 +35,13 @@ export async function GET(request: NextRequest) {
       // Both category and search filters
       posts = await sql`
         SELECT 
-          id, title, excerpt, author_name as author, category, status, created_at as published_date, 
-          slug, featured
+          id, title, excerpt, author_name as author, category, created_at as published_date, 
+          slug, is_featured as featured
         FROM blog_posts 
-        WHERE status = 'published' 
-          AND category = ${category}
+        WHERE category = ${category}
           AND (title ILIKE ${`%${search}%`} OR excerpt ILIKE ${`%${search}%`} OR content ILIKE ${`%${search}%`})
         ORDER BY 
-          CASE WHEN featured = true THEN 0 ELSE 1 END,
+          CASE WHEN is_featured = true THEN 0 ELSE 1 END,
           created_at DESC 
         LIMIT ${limit} OFFSET ${offset}
       `
@@ -50,8 +49,7 @@ export async function GET(request: NextRequest) {
       const countResult = await sql`
         SELECT COUNT(*) as total 
         FROM blog_posts 
-        WHERE status = 'published' 
-          AND category = ${category}
+        WHERE category = ${category}
           AND (title ILIKE ${`%${search}%`} OR excerpt ILIKE ${`%${search}%`} OR content ILIKE ${`%${search}%`})
       `
       total = parseInt(countResult[0]?.total || '0')
@@ -60,12 +58,12 @@ export async function GET(request: NextRequest) {
       // Only category filter
       posts = await sql`
         SELECT 
-          id, title, excerpt, author_name as author, category, status, created_at as published_date, 
-          slug, featured
+          id, title, excerpt, author_name as author, category, created_at as published_date, 
+          slug, is_featured as featured
         FROM blog_posts 
-        WHERE status = 'published' AND category = ${category}
+        WHERE category = ${category}
         ORDER BY 
-          CASE WHEN featured = true THEN 0 ELSE 1 END,
+          CASE WHEN is_featured = true THEN 0 ELSE 1 END,
           created_at DESC 
         LIMIT ${limit} OFFSET ${offset}
       `
@@ -73,7 +71,7 @@ export async function GET(request: NextRequest) {
       const countResult = await sql`
         SELECT COUNT(*) as total 
         FROM blog_posts 
-        WHERE status = 'published' AND category = ${category}
+        WHERE category = ${category}
       `
       total = parseInt(countResult[0]?.total || '0')
       
@@ -81,13 +79,12 @@ export async function GET(request: NextRequest) {
       // Only search filter
       posts = await sql`
         SELECT 
-          id, title, excerpt, author_name as author, category, status, created_at as published_date, 
-          slug, featured
+          id, title, excerpt, author_name as author, category, created_at as published_date, 
+          slug, is_featured as featured
         FROM blog_posts 
-        WHERE status = 'published' 
-          AND (title ILIKE ${`%${search}%`} OR excerpt ILIKE ${`%${search}%`} OR content ILIKE ${`%${search}%`})
+        WHERE (title ILIKE ${`%${search}%`} OR excerpt ILIKE ${`%${search}%`} OR content ILIKE ${`%${search}%`})
         ORDER BY 
-          CASE WHEN featured = true THEN 0 ELSE 1 END,
+          CASE WHEN is_featured = true THEN 0 ELSE 1 END,
           created_at DESC 
         LIMIT ${limit} OFFSET ${offset}
       `
@@ -95,8 +92,7 @@ export async function GET(request: NextRequest) {
       const countResult = await sql`
         SELECT COUNT(*) as total 
         FROM blog_posts 
-        WHERE status = 'published' 
-          AND (title ILIKE ${`%${search}%`} OR excerpt ILIKE ${`%${search}%`} OR content ILIKE ${`%${search}%`})
+        WHERE (title ILIKE ${`%${search}%`} OR excerpt ILIKE ${`%${search}%`} OR content ILIKE ${`%${search}%`})
       `
       total = parseInt(countResult[0]?.total || '0')
       
@@ -104,20 +100,18 @@ export async function GET(request: NextRequest) {
       // No filters
       posts = await sql`
         SELECT 
-          id, title, excerpt, author_name as author, category, status, created_at as published_date, 
-          slug, featured
+          id, title, excerpt, author_name as author, category, created_at as published_date, 
+          slug, is_featured as featured
         FROM blog_posts 
-        WHERE status = 'published'
         ORDER BY 
-          CASE WHEN featured = true THEN 0 ELSE 1 END,
+          CASE WHEN is_featured = true THEN 0 ELSE 1 END,
           created_at DESC 
         LIMIT ${limit} OFFSET ${offset}
       `
       
       const countResult = await sql`
         SELECT COUNT(*) as total 
-        FROM blog_posts 
-        WHERE status = 'published'
+        FROM blog_posts
       `
       total = parseInt(countResult[0]?.total || '0')
     }
@@ -161,56 +155,5 @@ export async function GET(request: NextRequest) {
       },
       { status: 500 }
     )
-  }
-}
-
-// Get featured post (internal helper function)
-async function getFeaturedPost() {
-  try {
-    const result = await sql`
-      SELECT 
-        id,
-        title,
-        excerpt,
-        author_name as author,
-        category,
-        created_at as published_date,
-        slug,
-        featured
-      FROM blog_posts 
-      WHERE status = 'published' AND featured = true
-      ORDER BY created_at DESC
-      LIMIT 1
-    `
-
-    if (result.length === 0) {
-      // If no featured post, get the latest post
-      const latestResult = await sql`
-        SELECT 
-          id,
-          title,
-          excerpt,
-          author_name as author,
-          category,
-          created_at as published_date,
-          slug,
-          featured
-        FROM blog_posts 
-        WHERE status = 'published'
-        ORDER BY created_at DESC
-        LIMIT 1
-      `
-      
-      if (latestResult.length === 0) {
-        return null
-      }
-      
-      return latestResult[0]
-    }
-
-    return result[0]
-  } catch (error) {
-    console.error('Error fetching featured post:', error)
-    return null
   }
 }

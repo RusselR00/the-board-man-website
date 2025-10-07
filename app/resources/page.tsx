@@ -279,57 +279,121 @@ export default function ResourcesPage() {
   const [searchTerm, setSearchTerm] = useState("")
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header Section */}
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold tracking-tight mb-4">
-          Resource Center
-        </h1>
-        <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-          Access valuable resources, tools, and insights to support your business success. 
-          Download templates, use our calculators, and stay informed with industry updates.
-        </p>
-      </div>
-
-      {/* Search Bar */}
-      <div className="max-w-md mx-auto mb-12">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input
-            placeholder="Search resources, guides, or FAQs..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+    <div className="min-h-screen bg-slate-950">
+      {/* Hero Section */}
+      <section className="relative py-20 bg-slate-950 text-white -mt-16 pt-32">
+        {/* Dark background with multiple layers */}
+        <div className="absolute inset-0 bg-slate-950"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-black"></div>
+        
+        {/* Subtle background pattern */}
+        <div className="absolute inset-0 opacity-[0.02]">
+          <div className="absolute inset-0" style={{
+            backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
+            backgroundSize: '48px 48px'
+          }}></div>
         </div>
-      </div>
+        
+        {/* Elegant accent elements */}
+        <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/3 left-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl"></div>
+        
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 text-slate-300 text-sm font-medium rounded-full backdrop-blur-sm mb-8">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                <BookOpen className="w-4 h-4 text-white" />
+              </div>
+              Resource Center
+            </div>
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 tracking-tight leading-tight">
+              <span className="bg-gradient-to-b from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
+                Business Resources
+              </span>
+            </h1>
+            <p className="text-xl md:text-2xl text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-emerald-400 mb-8 font-bold">
+              Tools, insights, and templates for your success
+            </p>
+            <p className="text-lg text-slate-300 max-w-3xl mx-auto leading-relaxed">
+              Access valuable resources, tools, and insights to support your business success. 
+              Download templates, use our calculators, and stay informed with industry updates.
+            </p>
+          </div>
+        </div>
+      </section>
 
-      {/* Main Content Tabs */}
-      <Tabs defaultValue="downloads" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-8">
-          <TabsTrigger value="downloads" className="flex items-center gap-2">
-            <Download className="h-4 w-4" />
-            Downloads
-          </TabsTrigger>
-          <TabsTrigger value="tools" className="flex items-center gap-2">
-            <Calculator className="h-4 w-4" />
-            Business Tools
-          </TabsTrigger>
-          <TabsTrigger value="insights" className="flex items-center gap-2">
-            <Lightbulb className="h-4 w-4" />
-            Industry Insights
-          </TabsTrigger>
-          <TabsTrigger value="faq" className="flex items-center gap-2">
-            <HelpCircle className="h-4 w-4" />
-            FAQ
-          </TabsTrigger>
-        </TabsList>
+      {/* Main Content */}
+      <section className="py-16 bg-slate-950 relative overflow-hidden">
+        {/* Subtle background pattern */}
+        <div className="absolute inset-0 opacity-[0.01]">
+          <div className="absolute inset-0" style={{
+            backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
+            backgroundSize: '48px 48px'
+          }}></div>
+        </div>
+        
+        {/* Subtle accent elements */}
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-blue-500/3 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-purple-500/3 rounded-full blur-3xl"></div>
+        
+        <div className="container mx-auto px-4 relative z-10">
+          {/* Search Bar */}
+          <div className="max-w-md mx-auto mb-12">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+              <Input
+                placeholder="Search resources, guides, or FAQs..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 bg-slate-900/30 border-slate-800/50 text-white placeholder:text-slate-500 focus:border-slate-700"
+              />
+            </div>
+          </div>
+
+          {/* Main Content Tabs */}
+          <Tabs defaultValue="downloads" className="w-full">
+            <TabsList className="grid w-full grid-cols-4 mb-8 bg-slate-900/30 border-slate-800/30 backdrop-blur-sm">
+              <TabsTrigger 
+                value="downloads" 
+                className="flex items-center gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-400 hover:text-slate-200"
+              >
+                <Download className="h-4 w-4" />
+                <span className="hidden sm:inline">Downloads</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="tools" 
+                className="flex items-center gap-2 data-[state=active]:bg-green-600 data-[state=active]:text-white text-slate-400 hover:text-slate-200"
+              >
+                <Calculator className="h-4 w-4" />
+                <span className="hidden sm:inline">Business Tools</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="insights" 
+                className="flex items-center gap-2 data-[state=active]:bg-purple-600 data-[state=active]:text-white text-slate-400 hover:text-slate-200"
+              >
+                <Lightbulb className="h-4 w-4" />
+                <span className="hidden sm:inline">Industry Insights</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="faq" 
+                className="flex items-center gap-2 data-[state=active]:bg-orange-600 data-[state=active]:text-white text-slate-400 hover:text-slate-200"
+              >
+                <HelpCircle className="h-4 w-4" />
+                <span className="hidden sm:inline">FAQ</span>
+              </TabsTrigger>
+            </TabsList>
 
         {/* Downloads Tab */}
         <TabsContent value="downloads" className="space-y-8">
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold mb-4">Downloadable Resources</h2>
-            <p className="text-muted-foreground">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/30 border border-slate-700/30 text-slate-400 text-sm font-medium rounded-full mb-8 backdrop-blur-sm">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                <Download className="w-4 h-4 text-white" />
+              </div>
+              Downloadable Resources
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Business Templates & Guides</h2>
+            <p className="text-slate-400 text-lg">
               Free templates, guides, and checklists to help streamline your business operations
             </p>
           </div>
@@ -337,32 +401,35 @@ export default function ResourcesPage() {
           {downloadableResources.map((category, categoryIndex) => (
             <div key={categoryIndex}>
               <div className="flex items-center gap-3 mb-6">
-                <div className={`p-2 rounded-lg bg-muted`}>
-                  <category.icon className={`h-6 w-6 ${category.color}`} />
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                  <category.icon className="h-6 w-6 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold">{category.category}</h3>
+                <h3 className="text-xl font-semibold text-white">{category.category}</h3>
               </div>
 
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
                 {category.resources.map((resource, resourceIndex) => (
-                  <Card key={resourceIndex} className="hover:shadow-lg transition-shadow">
-                    <CardHeader>
+                  <Card key={resourceIndex} className="bg-slate-900/20 border-slate-800/30 backdrop-blur-sm group hover:bg-slate-900/40 hover:border-slate-700/50 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1">
+                    {/* Subtle inner glow effect */}
+                    <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-white/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    
+                    <CardHeader className="relative z-10">
                       <div className="flex items-start justify-between">
-                        <CardTitle className="text-lg leading-tight">
+                        <CardTitle className="text-lg leading-tight text-white">
                           {resource.title}
                         </CardTitle>
                         {resource.isNew && (
-                          <Badge variant="secondary" className="ml-2">New</Badge>
+                          <Badge variant="secondary" className="ml-2 bg-blue-500/20 text-blue-300 border-blue-500/30">New</Badge>
                         )}
                       </div>
-                      <CardDescription>{resource.description}</CardDescription>
+                      <CardDescription className="text-slate-400">{resource.description}</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                      <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
+                    <CardContent className="relative z-10">
+                      <div className="flex items-center justify-between text-sm text-slate-500 mb-4">
                         <span>{resource.fileType} • {resource.fileSize}</span>
                         <span>{resource.downloadCount} downloads</span>
                       </div>
-                      <Button asChild className="w-full">
+                      <Button asChild className="w-full bg-white text-slate-900 hover:bg-slate-100 shadow-lg hover:shadow-xl transition-all duration-200 font-semibold">
                         <Link href={resource.href}>
                           <Download className="mr-2 h-4 w-4" />
                           Download
@@ -379,36 +446,45 @@ export default function ResourcesPage() {
         {/* Business Tools Tab */}
         <TabsContent value="tools" className="space-y-8">
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold mb-4">Business Calculators & Tools</h2>
-            <p className="text-muted-foreground">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/30 border border-slate-700/30 text-slate-400 text-sm font-medium rounded-full mb-8 backdrop-blur-sm">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
+                <Calculator className="w-4 h-4 text-white" />
+              </div>
+              Business Tools
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Calculators & Planning Tools</h2>
+            <p className="text-slate-400 text-lg">
               Interactive tools to help you make informed business decisions
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
             {businessCalculators.map((tool, index) => (
-              <Card key={index} className={`hover:shadow-lg transition-shadow ${!tool.available ? 'opacity-75' : ''}`}>
-                <CardHeader>
+              <Card key={index} className={`bg-slate-900/20 border-slate-800/30 backdrop-blur-sm group hover:bg-slate-900/40 hover:border-slate-700/50 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 ${!tool.available ? 'opacity-75' : ''}`}>
+                {/* Subtle inner glow effect */}
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-white/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                
+                <CardHeader className="relative z-10">
                   <div className="flex items-center gap-4">
-                    <div className={`p-3 rounded-lg ${tool.color}`}>
-                      <tool.icon className="h-6 w-6" />
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
+                      <tool.icon className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                      <CardTitle className="text-xl">{tool.title}</CardTitle>
-                      <CardDescription>{tool.description}</CardDescription>
+                      <CardTitle className="text-xl text-white">{tool.title}</CardTitle>
+                      <CardDescription className="text-slate-400">{tool.description}</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="relative z-10">
                   {tool.available ? (
-                    <Button asChild className="w-full">
+                    <Button asChild className="w-full bg-white text-slate-900 hover:bg-slate-100 shadow-lg hover:shadow-xl transition-all duration-200 font-semibold">
                       <Link href={tool.href}>
                         Use Calculator
                         <ChevronRight className="ml-2 h-4 w-4" />
                       </Link>
                     </Button>
                   ) : (
-                    <Button disabled className="w-full">
+                    <Button disabled className="w-full bg-slate-800/50 text-slate-400">
                       Coming Soon
                     </Button>
                   )}
@@ -417,52 +493,60 @@ export default function ResourcesPage() {
             ))}
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Request a Custom Tool</CardTitle>
-              <CardDescription>
-                Need a specific calculator or tool for your business? Let us know and we&apos;ll consider adding it to our resource center.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button variant="outline" asChild>
-                <Link href="/contact">
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  Contact Us
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-xl backdrop-blur-sm shadow-lg">
+            <h4 className="font-semibold text-green-300 mb-3 flex items-center gap-2">
+              <Calculator className="h-5 w-5 text-green-400" />
+              Request a Custom Tool
+            </h4>
+            <p className="text-green-200/90 leading-relaxed mb-4">
+              Need a specific calculator or tool for your business? Let us know and we&apos;ll consider adding it to our resource center.
+            </p>
+            <Button variant="outline" asChild className="bg-slate-800/30 border-slate-700/50 text-white hover:bg-slate-800/50 hover:border-slate-600/50">
+              <Link href="/contact">
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Contact Us
+              </Link>
+            </Button>
+          </div>
         </TabsContent>
 
         {/* Industry Insights Tab */}
         <TabsContent value="insights" className="space-y-8">
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold mb-4">Industry Insights & Updates</h2>
-            <p className="text-muted-foreground">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/30 border border-slate-700/30 text-slate-400 text-sm font-medium rounded-full mb-8 backdrop-blur-sm">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center">
+                <Lightbulb className="w-4 h-4 text-white" />
+              </div>
+              Industry Insights
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Latest Updates & Trends</h2>
+            <p className="text-slate-400 text-lg">
               Stay informed with the latest trends, regulations, and best practices
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
             {industryInsights.map((insight, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
+              <Card key={index} className="bg-slate-900/20 border-slate-800/30 backdrop-blur-sm group hover:bg-slate-900/40 hover:border-slate-700/50 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1">
+                {/* Subtle inner glow effect */}
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-white/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                
+                <CardHeader className="relative z-10">
                   <div className="flex items-start justify-between">
                     <div>
-                      <Badge variant="outline" className="mb-2">
+                      <Badge variant="outline" className="mb-2 bg-purple-500/20 text-purple-300 border-purple-500/30">
                         {insight.category}
                       </Badge>
-                      <CardTitle className="text-xl mb-2">{insight.title}</CardTitle>
-                      <CardDescription>{insight.description}</CardDescription>
+                      <CardTitle className="text-xl mb-2 text-white">{insight.title}</CardTitle>
+                      <CardDescription className="text-slate-400">{insight.description}</CardDescription>
                     </div>
                     {insight.isNew && (
-                      <Badge variant="secondary">New</Badge>
+                      <Badge variant="secondary" className="bg-purple-500/20 text-purple-300 border-purple-500/30">New</Badge>
                     )}
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
+                <CardContent className="relative z-10">
+                  <div className="flex items-center justify-between text-sm text-slate-500 mb-4">
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4" />
                       {insight.readTime}
@@ -473,7 +557,7 @@ export default function ResourcesPage() {
                       day: 'numeric' 
                     })}</span>
                   </div>
-                  <Button variant="outline" asChild className="w-full">
+                  <Button variant="outline" asChild className="w-full bg-slate-800/30 border-slate-700/50 text-white hover:bg-slate-800/50 hover:border-slate-600/50">
                     <Link href={insight.href}>
                       Read Article
                       <ChevronRight className="ml-2 h-4 w-4" />
@@ -484,27 +568,32 @@ export default function ResourcesPage() {
             ))}
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Stay Updated</CardTitle>
-              <CardDescription>
-                Subscribe to our newsletter to receive the latest industry insights and updates directly in your inbox.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-4">
-                <Input placeholder="Enter your email address" className="flex-1" />
-                <Button>Subscribe</Button>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-xl backdrop-blur-sm shadow-lg">
+            <h4 className="font-semibold text-purple-300 mb-3 flex items-center gap-2">
+              <Lightbulb className="h-5 w-5 text-purple-400" />
+              Stay Updated
+            </h4>
+            <p className="text-purple-200/90 leading-relaxed mb-4">
+              Subscribe to our newsletter to receive the latest industry insights and updates directly in your inbox.
+            </p>
+            <div className="flex gap-4">
+              <Input placeholder="Enter your email address" className="flex-1 bg-slate-900/30 border-slate-800/50 text-white placeholder:text-slate-500 focus:border-slate-700" />
+              <Button className="bg-white text-slate-900 hover:bg-slate-100 font-semibold">Subscribe</Button>
+            </div>
+          </div>
         </TabsContent>
 
         {/* FAQ Tab */}
         <TabsContent value="faq" className="space-y-8">
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold mb-4">Frequently Asked Questions</h2>
-            <p className="text-muted-foreground">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/30 border border-slate-700/30 text-slate-400 text-sm font-medium rounded-full mb-8 backdrop-blur-sm">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
+                <HelpCircle className="w-4 h-4 text-white" />
+              </div>
+              Frequently Asked Questions
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Common Questions</h2>
+            <p className="text-slate-400 text-lg">
               Find answers to common questions about accounting, taxation, and business setup in the UAE
             </p>
           </div>
@@ -512,11 +601,11 @@ export default function ResourcesPage() {
           <div className="max-w-4xl mx-auto">
             <Accordion type="single" collapsible className="w-full">
               {faqData.map((faq, index) => (
-                <AccordionItem key={index} value={`item-${index + 1}`}>
-                  <AccordionTrigger className="text-left">
+                <AccordionItem key={index} value={`item-${index + 1}`} className="border-slate-800/50">
+                  <AccordionTrigger className="text-left text-white hover:text-orange-400 transition-colors">
                     {faq.question}
                   </AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground text-balance">
+                  <AccordionContent className="text-slate-400">
                     {faq.answer}
                   </AccordionContent>
                 </AccordionItem>
@@ -524,51 +613,59 @@ export default function ResourcesPage() {
             </Accordion>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <HelpCircle className="h-5 w-5" />
-                Still Have Questions?
-              </CardTitle>
-              <CardDescription>
-                Can&apos;t find the answer you&apos;re looking for? Our expert team is here to help with personalized advice.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button asChild>
-                  <Link href="/contact">
-                    Contact Our Experts
-                  </Link>
-                </Button>
-                <Button variant="outline" asChild>
-                  <Link href="/booking">
-                    Book a Consultation
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="bg-slate-800/40 border border-slate-700/50 p-6 rounded-xl backdrop-blur-sm shadow-lg">
+            <h4 className="font-semibold text-orange-300 mb-3 flex items-center gap-2">
+              <HelpCircle className="h-5 w-5 text-orange-400" />
+              Still Have Questions?
+            </h4>
+            <p className="text-orange-200/90 leading-relaxed mb-4">
+              Can&apos;t find the answer you&apos;re looking for? Our expert team is here to help with personalized advice.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button asChild className="bg-white text-slate-900 hover:bg-slate-100 shadow-lg hover:shadow-xl transition-all duration-200 font-semibold">
+                <Link href="/contact">
+                  Contact Our Experts
+                </Link>
+              </Button>
+              <Button variant="outline" asChild className="bg-slate-800/30 border-slate-700/50 text-white hover:bg-slate-800/50 hover:border-slate-600/50">
+                <Link href="/booking">
+                  Book a Consultation
+                </Link>
+              </Button>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
+    </div>
+  </section>
 
-      {/* Bottom CTA Section */}
-      <div className="mt-16 text-center p-8 bg-muted rounded-lg">
-        <h2 className="text-2xl font-bold mb-4">
+  {/* Bottom CTA Section */}
+  <section className="py-16 bg-slate-900 text-white relative overflow-hidden">
+    {/* Dark background with multiple layers */}
+    <div className="absolute inset-0 bg-slate-900"></div>
+    <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-950 to-black"></div>
+    
+    {/* Elegant accent elements */}
+    <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl"></div>
+    <div className="absolute bottom-1/3 left-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl"></div>
+    
+    <div className="container mx-auto px-4 text-center relative z-10">
+      <div className="max-w-2xl mx-auto p-8 rounded-2xl bg-slate-800/30 border border-slate-700/40 backdrop-blur-sm shadow-2xl shadow-black/20">
+        <h2 className="text-2xl font-bold mb-4 text-white">
           Ready to Get Professional Support?
         </h2>
-        <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+        <p className="text-slate-400 mb-6">
           While our resources provide valuable guidance, nothing replaces personalized professional advice. 
           Let our experts help you navigate your specific business challenges.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button asChild size="lg">
+          <Button asChild size="lg" className="h-12 px-8 bg-white text-slate-900 hover:bg-slate-100 shadow-lg hover:shadow-xl transition-all duration-200 font-semibold">
             <Link href="/booking">
               <Clock className="mr-2 h-4 w-4" />
               Book Free Consultation
             </Link>
           </Button>
-          <Button variant="outline" size="lg" asChild>
+          <Button variant="outline" size="lg" asChild className="h-12 px-8 bg-slate-800/30 border-slate-700/50 text-white hover:bg-slate-800/50 hover:border-slate-600/50 font-semibold">
             <Link href="/contact">
               <Users className="mr-2 h-4 w-4" />
               Contact Our Team
@@ -577,5 +674,7 @@ export default function ResourcesPage() {
         </div>
       </div>
     </div>
+  </section>
+</div>
   )
 }
