@@ -281,7 +281,7 @@ export default function UserManagementPage() {
             <div className="space-y-4 text-sm">
               <p>If you prefer to add users directly to the database:</p>
               <ol className="list-decimal list-inside space-y-2">
-                <li>Use the "Generate Hash" tab to create a password hash</li>
+                <li>Use the &quot;Generate Hash&quot; tab to create a password hash</li>
                 <li>Copy the generated SQL insert statement</li>
                 <li>Run it in your database console (Neon, pgAdmin, etc.)</li>
                 <li>The user will be able to log in immediately</li>
