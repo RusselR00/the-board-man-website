@@ -164,8 +164,8 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Get featured post
-export async function getFeaturedPost() {
+// Get featured post (internal helper function)
+async function getFeaturedPost() {
   try {
     const result = await sql`
       SELECT 

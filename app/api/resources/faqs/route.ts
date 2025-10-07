@@ -267,9 +267,12 @@ export async function DELETE(request: NextRequest) {
 
 // Special endpoint to increment view count
 export async function PATCH(request: NextRequest) {
+  let action = 'unknown' // Define action outside try block for error handling
+  
   try {
     const body = await request.json()
-    const { id, action } = body
+    const { id } = body
+    action = body.action // Assign to outer scope variable
 
     if (!id || !action) {
       return NextResponse.json(
@@ -315,9 +318,9 @@ export async function PATCH(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error(`Error updating FAQ ${body?.action} count:`, error)
+    console.error(`Error updating FAQ ${action} count:`, error)
     return NextResponse.json(
-      { success: false, error: `Failed to update FAQ ${body?.action} count` },
+      { success: false, error: `Failed to update FAQ ${action} count` },
       { status: 500 }
     )
   }

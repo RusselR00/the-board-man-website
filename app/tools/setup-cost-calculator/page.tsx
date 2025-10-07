@@ -351,7 +351,7 @@ export default function SetupCostCalculatorPage() {
         <div className="grid md:grid-cols-2 gap-6 mt-8">
           <Card>
             <CardHeader>
-              <CardTitle>What's Included</CardTitle>
+              <CardTitle>What&apos;s Included</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">

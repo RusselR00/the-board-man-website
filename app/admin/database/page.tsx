@@ -123,7 +123,7 @@ export default function DatabaseSetupPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3 text-sm">
-            <p>After initializing the database schema, you'll be able to:</p>
+            <p>After initializing the database schema, you&apos;ll be able to:</p>
             <ul className="space-y-2 text-gray-600 ml-4">
               <li>1. <strong>Upload and manage files</strong> - PDFs, images, documents</li>
               <li>2. <strong>Create downloadable resources</strong> - Guides, templates, white papers</li>

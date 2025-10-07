@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { MessageSquare, Mail, Phone, Search, Filter, Eye, Trash2, Reply, AlertCircle } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { adminApi } from "@/lib/api-client"
 
 interface Contact {
@@ -54,7 +54,7 @@ export default function ContactsPage() {
     urgency: "all"
   })
 
-  const fetchContacts = async () => {
+  const fetchContacts = useCallback(async () => {
     try {
       setIsLoading(true)
       const data = await adminApi.getContacts(pagination.page, pagination.limit, filters.status)
@@ -72,11 +72,11 @@ export default function ContactsPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [pagination.page, pagination.limit, filters.status])
 
   useEffect(() => {
     fetchContacts()
-  }, [pagination.page, filters.status])
+  }, [pagination.page, filters.status, fetchContacts])
 
   const updateContactStatus = async (contactId: string, newStatus: string) => {
     try {
