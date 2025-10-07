@@ -1,42 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sql } from '@vercel/postgres'
+import { neon } from '@neondatabase/serverless'
 
 export async function GET(request: NextRequest) {
   try {
+    const sql = neon(process.env.DATABASE_URL!)
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
     const status = searchParams.get('status')
     const offset = (page - 1) * limit
 
-    // Build the query based on filters
-    let whereClause = ''
-    let queryParams = []
+    // Get contacts with optional status filter
+    let contacts
+    let totalResult
     
     if (status && status !== 'all') {
-      whereClause = 'WHERE status = $1'
-      queryParams.push(status)
+      contacts = await sql`
+        SELECT * FROM contacts 
+        WHERE status = ${status}
+        ORDER BY created_at DESC 
+        LIMIT ${limit} OFFSET ${offset}
+      `
+      totalResult = await sql`
+        SELECT COUNT(*) as total FROM contacts WHERE status = ${status}
+      `
+    } else {
+      contacts = await sql`
+        SELECT * FROM contacts 
+        ORDER BY created_at DESC 
+        LIMIT ${limit} OFFSET ${offset}
+      `
+      totalResult = await sql`
+        SELECT COUNT(*) as total FROM contacts
+      `
     }
 
-    // Get total count
-    const countQuery = status && status !== 'all' 
-      ? `SELECT COUNT(*) as count FROM contacts WHERE status = $1`
-      : `SELECT COUNT(*) as count FROM contacts`
-    
-    const { rows: countRows } = await sql.query(countQuery, status && status !== 'all' ? [status] : [])
-    const totalContacts = parseInt(countRows[0].count)
-
-    // Get contacts with pagination
-    const contactsQuery = `
-      SELECT id, name, email, subject, message, status, created_at
-      FROM contacts 
-      ${whereClause}
-      ORDER BY created_at DESC 
-      LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}
-    `
-    
-    queryParams.push(limit, offset)
-    const { rows: contacts } = await sql.query(contactsQuery, queryParams)
+    const totalContacts = parseInt(totalResult[0].total)
 
     return NextResponse.json({
       success: true,
@@ -63,6 +62,7 @@ export async function GET(request: NextRequest) {
 // Update contact status
 export async function PATCH(request: NextRequest) {
   try {
+    const sql = neon(process.env.DATABASE_URL!)
     const body = await request.json()
     const { id, status } = body
 

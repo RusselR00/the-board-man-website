@@ -1,44 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sql } from '@vercel/postgres'
+import { neon } from '@neondatabase/serverless'
 
 export async function GET(request: NextRequest) {
   try {
+    const sql = neon(process.env.DATABASE_URL!)
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
     const status = searchParams.get('status')
     const offset = (page - 1) * limit
 
-    // Build the query based on filters
-    let whereClause = ''
-    let queryParams = []
+    // Get bookings with optional status filter
+    let bookings
+    let totalResult
     
     if (status && status !== 'all') {
-      whereClause = 'WHERE status = $1'
-      queryParams.push(status)
+      bookings = await sql`
+        SELECT * FROM bookings 
+        WHERE status = ${status}
+        ORDER BY created_at DESC 
+        LIMIT ${limit} OFFSET ${offset}
+      `
+      totalResult = await sql`
+        SELECT COUNT(*) as total FROM bookings WHERE status = ${status}
+      `
+    } else {
+      bookings = await sql`
+        SELECT * FROM bookings 
+        ORDER BY created_at DESC 
+        LIMIT ${limit} OFFSET ${offset}
+      `
+      totalResult = await sql`
+        SELECT COUNT(*) as total FROM bookings
+      `
     }
 
-    // Get total count
-    const countQuery = status && status !== 'all' 
-      ? `SELECT COUNT(*) as count FROM bookings WHERE status = $1`
-      : `SELECT COUNT(*) as count FROM bookings`
-    
-    const { rows: countRows } = await sql.query(countQuery, status && status !== 'all' ? [status] : [])
-    const totalBookings = parseInt(countRows[0].count)
-
-    // Get bookings with pagination
-    const bookingsQuery = `
-      SELECT id, name, email, phone, company, service_type, 
-             preferred_date, preferred_time, budget_range, 
-             description, status, created_at
-      FROM bookings 
-      ${whereClause}
-      ORDER BY created_at DESC 
-      LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}
-    `
-    
-    queryParams.push(limit, offset)
-    const { rows: bookings } = await sql.query(bookingsQuery, queryParams)
+    const totalBookings = parseInt(totalResult[0].total)
 
     return NextResponse.json({
       success: true,
@@ -65,6 +62,7 @@ export async function GET(request: NextRequest) {
 // Update booking status
 export async function PATCH(request: NextRequest) {
   try {
+    const sql = neon(process.env.DATABASE_URL!)
     const body = await request.json()
     const { id, status } = body
 

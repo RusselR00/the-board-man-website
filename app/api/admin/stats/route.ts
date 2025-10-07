@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sql } from '@vercel/postgres'
+import { neon } from '@neondatabase/serverless'
 
 export async function GET(request: NextRequest) {
   try {
+    const sql = neon(process.env.DATABASE_URL!)
+
     // Get contacts stats
-    const { rows: contactStats } = await sql`
+    const contactStats = await sql`
       SELECT 
         COUNT(*) as total,
         COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending,
@@ -14,7 +16,7 @@ export async function GET(request: NextRequest) {
     `
 
     // Get bookings stats
-    const { rows: bookingStats } = await sql`
+    const bookingStats = await sql`
       SELECT 
         COUNT(*) as total,
         COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending,
@@ -25,14 +27,14 @@ export async function GET(request: NextRequest) {
     `
 
     // Get recent activity (last 10 items)
-    const { rows: recentContacts } = await sql`
+    const recentContacts = await sql`
       SELECT 'contact' as type, name, email, created_at, status
       FROM contacts
       ORDER BY created_at DESC
       LIMIT 5
     `
 
-    const { rows: recentBookings } = await sql`
+    const recentBookings = await sql`
       SELECT 'booking' as type, name, email, created_at, status
       FROM bookings
       ORDER BY created_at DESC
@@ -45,7 +47,7 @@ export async function GET(request: NextRequest) {
       .slice(0, 10)
 
     // Get monthly trends (last 6 months)
-    const { rows: monthlyTrends } = await sql`
+    const monthlyTrends = await sql`
       SELECT 
         DATE_TRUNC('month', created_at) as month,
         COUNT(CASE WHEN table_name = 'contacts' THEN 1 END) as contacts,
