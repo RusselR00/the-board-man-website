@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useParams } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import { 
@@ -19,7 +20,8 @@ import {
   CheckCircle2,
   Eye,
   Tag,
-  ArrowRight
+  ArrowRight,
+  Loader2
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -40,174 +42,96 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 
-// This would typically come from a CMS or API
-const blogPost = {
-  id: 1,
-  title: "UAE Corporate Tax: Complete Guide for 2025",
-  excerpt: "Everything you need to know about the new UAE corporate tax regulations, compliance requirements, and how they affect your business operations.",
-  content: `
-# Introduction
-
-The UAE introduced federal corporate tax effective from June 1, 2023, marking a significant shift in the country's tax landscape. This comprehensive guide covers everything businesses need to know about UAE corporate tax compliance, rates, and planning strategies for 2025.
-
-## Key Changes for 2025
-
-The corporate tax regime has been in effect for over a year now, and several clarifications and updates have been issued by the Federal Tax Authority (FTA). Here are the most important developments:
-
-### Tax Rates Structure
-
-- **Small Business Relief**: 0% tax rate for taxable income up to AED 375,000
-- **Standard Rate**: 9% tax rate for taxable income above AED 375,000
-- **Qualifying Free Zone Persons**: May benefit from 0% rate under specific conditions
-
-### Filing Requirements
-
-All UAE businesses subject to corporate tax must:
-
-1. Register with the Federal Tax Authority
-2. Maintain proper books and records
-3. File annual corporate tax returns
-4. Pay any tax due within specified deadlines
-
-## Compliance Checklist for 2025
-
-### Registration Process
-
-Every UAE business must determine if they are subject to corporate tax and register accordingly. The registration process includes:
-
-- **Online Registration**: Through the FTA portal
-- **Documentation**: Providing trade license, memorandum of association, and other required documents
-- **Tax Group Registration**: For qualifying group companies
-
-### Record Keeping Requirements
-
-Businesses must maintain comprehensive records including:
-
-- Financial statements prepared in accordance with applicable accounting standards
-- General ledger and supporting books of account
-- Bank statements and cash records
-- Invoices, receipts, and supporting documentation
-- Transfer pricing documentation (where applicable)
-
-### Annual Return Filing
-
-The corporate tax return must be filed within 9 months from the end of the tax period. Key requirements include:
-
-1. **Financial Information**: Audited financial statements or management accounts
-2. **Tax Computation**: Detailed calculation of taxable income
-3. **Supporting Schedules**: Additional forms and schedules as required
-4. **Payment**: Any tax due must be paid by the filing deadline
-
-## Strategic Tax Planning
-
-### Business Structure Optimization
-
-Consider the following strategies to optimize your tax position:
-
-- **Entity Selection**: Choose the most tax-efficient business structure
-- **Free Zone Benefits**: Evaluate eligibility for free zone tax incentives
-- **Group Structure**: Implement tax-efficient group structures where appropriate
-
-### Transfer Pricing Compliance
-
-For businesses with related party transactions, transfer pricing compliance is crucial:
-
-- **Documentation**: Maintain contemporaneous transfer pricing documentation
-- **Economic Analysis**: Ensure transactions are at arm's length
-- **Country-by-Country Reporting**: For qualifying multinational groups
-
-## Common Compliance Pitfalls
-
-### Avoid These Mistakes
-
-1. **Late Registration**: Failing to register within required timeframes
-2. **Inadequate Records**: Not maintaining sufficient supporting documentation
-3. **Missed Deadlines**: Late filing of returns or payment of tax
-4. **Transfer Pricing Errors**: Incorrect pricing of related party transactions
-
-### Best Practices
-
-- **Professional Advice**: Engage qualified tax advisors
-- **Regular Reviews**: Conduct periodic compliance reviews
-- **System Implementation**: Use appropriate accounting and tax software
-- **Staff Training**: Ensure your team understands compliance requirements
-
-## Looking Ahead: 2025 Developments
-
-### Expected Changes
-
-The FTA continues to issue guidance and clarifications. Key areas to watch include:
-
-- **Additional Guidance**: Further clarifications on specific provisions
-- **Digital Services**: Potential developments in digital services taxation
-- **International Coordination**: Enhanced cooperation with other tax jurisdictions
-
-### Preparation Strategies
-
-To stay ahead of developments:
-
-1. **Regular Updates**: Subscribe to FTA updates and guidance
-2. **Professional Development**: Invest in ongoing tax training
-3. **System Upgrades**: Ensure your systems can handle evolving requirements
-4. **Advisory Relationships**: Maintain relationships with qualified tax advisors
-
-## Conclusion
-
-UAE corporate tax compliance requires careful planning and attention to detail. By understanding the requirements, maintaining proper records, and seeking professional advice when needed, businesses can ensure compliance while optimizing their tax position.
-
-The tax landscape continues to evolve, making it essential to stay informed about developments and maintain robust compliance procedures. For personalized advice on your specific situation, consider consulting with qualified tax professionals who can help navigate the complexities of UAE corporate tax.
-  `,
+interface BlogPost {
+  id: number
+  title: string
+  slug: string
+  excerpt: string
+  content: string
   author: {
-    name: "Ahmed Al-Mansouri",
-    role: "Senior Tax Consultant",
-    avatar: "/images/authors/ahmed.jpg",
-    bio: "Ahmed is a senior tax consultant with over 15 years of experience in UAE taxation and corporate compliance. He specializes in helping businesses navigate complex tax regulations and optimize their tax strategies."
-  },
-  category: "Tax & Compliance",
-  publishDate: "2024-12-15",
-  readTime: "12 min read",
-  image: "/images/blog/uae-corporate-tax-2025.jpg",
-  tags: ["Corporate Tax", "UAE", "Compliance", "Business"],
-  featured: true,
-  views: 3247,
-  likes: 89,
-  slug: "uae-corporate-tax-complete-guide-2025"
+    name: string
+    role: string
+    avatar?: string
+    bio?: string
+  }
+  category: string
+  publishDate: string
+  readTime: string
+  image: string
+  tags: string[]
+  featured: boolean
+  views: number
+  likes: number
+  comments?: number
+  seoTitle?: string
+  seoDescription?: string
 }
 
-const relatedPosts = [
-  {
-    id: 2,
-    title: "VAT Compliance Best Practices for UAE Businesses",
-    excerpt: "Essential VAT compliance strategies and common mistakes to avoid.",
-    category: "Tax & Compliance",
-    readTime: "7 min read",
-    image: "/images/blog/vat-compliance-best-practices.jpg",
-    slug: "vat-compliance-best-practices-uae"
-  },
-  {
-    id: 3,
-    title: "Business Setup in Dubai: Free Zone vs Mainland",
-    excerpt: "Detailed comparison of setup options in Dubai.",
-    category: "Business Setup",
-    readTime: "15 min read",
-    image: "/images/blog/dubai-business-setup.jpg",
-    slug: "dubai-business-setup-freezone-vs-mainland"
-  },
-  {
-    id: 4,
-    title: "ESG Reporting Requirements in the UAE",
-    excerpt: "Understanding Environmental, Social, and Governance reporting obligations.",
-    category: "Compliance", 
-    readTime: "10 min read",
-    image: "/images/blog/esg-reporting-uae.jpg",
-    slug: "esg-reporting-requirements-uae-overview"
+interface RelatedPost {
+  id: number
+  title: string
+  excerpt: string
+  category: string
+  readTime: string
+  image: string
+  slug: string
+  featured: boolean
+  views: number
+  author: {
+    name: string
+    role: string
   }
-]
+  publishDate: string
+}
+
+interface BlogPostResponse {
+  success: boolean
+  data: {
+    post: BlogPost
+    relatedPosts: RelatedPost[]
+  }
+  error?: string
+}
 
 export default function BlogPostPage() {
+  const params = useParams()
+  const slug = params?.slug as string
+  
+  const [blogPost, setBlogPost] = useState<BlogPost | null>(null)
+  const [relatedPosts, setRelatedPosts] = useState<RelatedPost[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [isLiked, setIsLiked] = useState(false)
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
+
+  useEffect(() => {
+    if (!slug) return
+
+    const fetchBlogPost = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+        
+        const response = await fetch(`/api/blog/${slug}`)
+        const data: BlogPostResponse = await response.json()
+        
+        if (data.success && data.data) {
+          setBlogPost(data.data.post)
+          setRelatedPosts(data.data.relatedPosts || [])
+        } else {
+          setError(data.error || 'Blog post not found')
+        }
+      } catch (err) {
+        console.error('Error fetching blog post:', err)
+        setError('Failed to load blog post')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchBlogPost()
+  }, [slug])
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -219,7 +143,7 @@ export default function BlogPostPage() {
 
   const handleShare = (platform: string) => {
     const url = window.location.href
-    const title = blogPost.title
+    const title = blogPost?.title || ''
     
     let shareUrl = ''
     
@@ -243,6 +167,40 @@ export default function BlogPostPage() {
     if (shareUrl) {
       window.open(shareUrl, '_blank', 'width=600,height=400')
     }
+  }
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+            <span className="ml-3 text-lg text-muted-foreground">Loading article...</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error || !blogPost) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto text-center py-20">
+          <h1 className="text-2xl font-bold mb-4">Article Not Found</h1>
+          <p className="text-muted-foreground mb-6">
+            {error || 'The article you are looking for could not be found.'}
+          </p>
+          <Button asChild>
+            <Link href="/blog">
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Back to Blog
+            </Link>
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -392,23 +350,38 @@ export default function BlogPostPage() {
 
         {/* Article Content */}
         <div className="prose prose-lg max-w-none mb-12">
-          <div dangerouslySetInnerHTML={{ __html: blogPost.content.replace(/\n/g, '<br />') }} />
+          <div 
+            dangerouslySetInnerHTML={{ 
+              __html: blogPost.content
+                .replace(/\n/g, '<br />')
+                .replace(/^# (.+)/gm, '<h1>$1</h1>')
+                .replace(/^## (.+)/gm, '<h2>$1</h2>')
+                .replace(/^### (.+)/gm, '<h3>$1</h3>')
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                .replace(/^\- (.+)/gm, '<li>$1</li>')
+                .replace(/(<li>[\s\S]*?<\/li>)/g, '<ul>$1</ul>')
+                .replace(/^\d+\. (.+)/gm, '<li>$1</li>')
+            }} 
+          />
         </div>
 
         {/* Tags */}
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Tag className="h-5 w-5" />
-            Article Tags
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {blogPost.tags.map((tag) => (
-              <Badge key={tag} variant="secondary">
-                {tag}
-              </Badge>
-            ))}
+        {blogPost.tags && blogPost.tags.length > 0 && (
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Tag className="h-5 w-5" />
+              Article Tags
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {blogPost.tags.map((tag) => (
+                <Badge key={tag} variant="secondary">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         <Separator className="mb-8" />
 
@@ -425,7 +398,9 @@ export default function BlogPostPage() {
               <div className="flex-1">
                 <h3 className="text-lg font-semibold mb-1">{blogPost.author.name}</h3>
                 <p className="text-sm text-muted-foreground mb-2">{blogPost.author.role}</p>
-                <p className="text-sm">{blogPost.author.bio}</p>
+                <p className="text-sm">
+                  {blogPost.author.bio || `${blogPost.author.name} is a member of our expert team with extensive experience in ${blogPost.category.toLowerCase()}.`}
+                </p>
                 <div className="flex gap-2 mt-3">
                   <Button variant="outline" size="sm" asChild>
                     <Link href="/contact">Contact {blogPost.author.name.split(' ')[0]}</Link>
@@ -440,53 +415,55 @@ export default function BlogPostPage() {
         </Card>
 
         {/* Related Articles */}
-        <div>
-          <h2 className="text-2xl font-bold mb-6">Related Articles</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {relatedPosts.map((post) => (
-              <Card key={post.id} className="overflow-hidden hover:shadow-lg transition-shadow group">
-                <div className="relative h-48">
-                  <Image
-                    src={post.image}
-                    alt={post.title}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <Badge 
-                    variant="outline" 
-                    className="absolute top-4 left-4 bg-background/80 backdrop-blur-sm"
-                  >
-                    {post.category}
-                  </Badge>
-                </div>
-                
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                    <Clock className="h-4 w-4" />
-                    {post.readTime}
+        {relatedPosts.length > 0 && (
+          <div>
+            <h2 className="text-2xl font-bold mb-6">Related Articles</h2>
+            <div className="grid md:grid-cols-3 gap-6">
+              {relatedPosts.map((post) => (
+                <Card key={post.id} className="overflow-hidden hover:shadow-lg transition-shadow group">
+                  <div className="relative h-48">
+                    <Image
+                      src={post.image}
+                      alt={post.title}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <Badge 
+                      variant="outline" 
+                      className="absolute top-4 left-4 bg-background/80 backdrop-blur-sm"
+                    >
+                      {post.category}
+                    </Badge>
                   </div>
                   
-                  <h3 className="font-semibold mb-2 leading-tight group-hover:text-primary transition-colors">
-                    <Link href={`/blog/${post.slug}`}>
-                      {post.title}
-                    </Link>
-                  </h3>
-                  
-                  <p className="text-muted-foreground text-sm mb-3 line-clamp-2">
-                    {post.excerpt}
-                  </p>
-                  
-                  <Button variant="ghost" size="sm" asChild className="p-0">
-                    <Link href={`/blog/${post.slug}`}>
-                      Read More
-                      <ArrowRight className="ml-1 h-4 w-4" />
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                      <Clock className="h-4 w-4" />
+                      {post.readTime}
+                    </div>
+                    
+                    <h3 className="font-semibold mb-2 leading-tight group-hover:text-primary transition-colors">
+                      <Link href={`/blog/${post.slug}`}>
+                        {post.title}
+                      </Link>
+                    </h3>
+                    
+                    <p className="text-muted-foreground text-sm mb-3 line-clamp-2">
+                      {post.excerpt}
+                    </p>
+                    
+                    <Button variant="ghost" size="sm" asChild className="p-0">
+                      <Link href={`/blog/${post.slug}`} className="flex items-center gap-2">
+                        <span>Read More</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* CTA Section */}
         <Card className="mt-12 bg-muted">
