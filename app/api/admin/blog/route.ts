@@ -5,14 +5,20 @@ const sql = neon(process.env.DATABASE_URL!)
 
 type BlogPost = {
   id: number
-  title: string
   slug: string
-  excerpt: string
+  title: string
+  excerpt?: string
   content: string
-  category: string
-  status: 'draft' | 'published'
-  featured: boolean
+  featured_image?: string
   author_name: string
+  author_role?: string
+  category: string
+  tags: string[]
+  is_published: boolean
+  is_featured: boolean
+  read_time?: number
+  views: number
+  publish_date?: string
   created_at: string
   updated_at: string
 }
@@ -26,66 +32,74 @@ function createSlug(title: string): string {
     .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
 }
 
-// Helper function to format date for display
-function formatDate(date: Date): string {
-  return date.toISOString().split('T')[0]
-}
-
 export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url)
     const page = parseInt(url.searchParams.get('page') || '1')
     const limit = parseInt(url.searchParams.get('limit') || '10')
     const category = url.searchParams.get('category')
-    const status = url.searchParams.get('status')
+    const status = url.searchParams.get('status') // 'published' or 'draft'
     const search = url.searchParams.get('search')
     const offset = (page - 1) * limit
 
-    // Get all posts first, then apply filters in JavaScript for simplicity
-    let allPosts = await sql`
+    // Start with base query
+    let whereConditions = []
+    
+    if (category && category !== 'all') {
+      whereConditions.push(`category = '${category}'`)
+    }
+    
+    if (status === 'published') {
+      whereConditions.push(`is_published = true`)
+    } else if (status === 'draft') {
+      whereConditions.push(`is_published = false`)
+    }
+    
+    if (search) {
+      const searchEscaped = search.replace(/'/g, "''") // Basic SQL injection protection
+      whereConditions.push(`(title ILIKE '%${searchEscaped}%' OR excerpt ILIKE '%${searchEscaped}%' OR content ILIKE '%${searchEscaped}%')`)
+    }
+
+    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : ''
+    
+    // Get total count and posts
+    const posts = await sql`
       SELECT 
-        id, title, slug, excerpt, content, category, status, 
-        featured, author_name, created_at, updated_at
+        id, slug, title, excerpt, content, featured_image, author_name, author_role,
+        category, tags, is_published, is_featured, read_time, views, publish_date,
+        created_at, updated_at
       FROM blog_posts 
       ORDER BY created_at DESC
     `
 
-    // Apply filters
-    let filteredPosts = allPosts
+    // Apply filters in JavaScript for simplicity
+    let filteredPosts = posts
 
     if (category && category !== 'all') {
       filteredPosts = filteredPosts.filter(post => post.category === category)
     }
     
-    if (status && status !== 'all') {
-      filteredPosts = filteredPosts.filter(post => post.status === status)
+    if (status === 'published') {
+      filteredPosts = filteredPosts.filter(post => post.is_published)
+    } else if (status === 'draft') {
+      filteredPosts = filteredPosts.filter(post => !post.is_published)
     }
     
     if (search) {
       const searchLower = search.toLowerCase()
       filteredPosts = filteredPosts.filter(post => 
         post.title.toLowerCase().includes(searchLower) ||
-        post.excerpt.toLowerCase().includes(searchLower) ||
+        (post.excerpt && post.excerpt.toLowerCase().includes(searchLower)) ||
         post.content.toLowerCase().includes(searchLower)
       )
     }
 
-    // Apply pagination
     const total = filteredPosts.length
     const paginatedPosts = filteredPosts.slice(offset, offset + limit)
 
-    // Format dates for frontend
-    const formattedPosts = paginatedPosts.map(post => ({
-      ...post,
-      id: post.id.toString(),
-      author: post.author_name,
-      createdAt: formatDate(new Date(post.created_at)),
-      updatedAt: formatDate(new Date(post.updated_at))
-    }))
-
     return NextResponse.json({
       success: true,
-      posts: formattedPosts,
+      posts: paginatedPosts,
       total,
       page,
       limit,
@@ -94,7 +108,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching blog posts:', error)
     return NextResponse.json(
-      { success: false, message: 'Failed to fetch blog posts' },
+      { success: false, message: 'Failed to fetch blog posts', error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }
@@ -103,32 +117,48 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json()
-    const { title, excerpt, content, category, status, featured } = data
+    const { 
+      title, slug, excerpt, content, featured_image, author_name, author_role,
+      category, tags, is_published, is_featured, read_time, publish_date
+    } = data
     
-    // Generate slug from title
-    const slug = createSlug(title)
+    // Generate slug if not provided
+    const finalSlug = slug || createSlug(title)
     
     // Insert new blog post
     const result = await sql`
-      INSERT INTO blog_posts (title, slug, excerpt, content, category, status, featured, author_name)
-      VALUES (${title}, ${slug}, ${excerpt}, ${content}, ${category}, ${status}, ${featured}, 'Admin User')
-      RETURNING id, title, slug, excerpt, content, category, status, featured, author_name, created_at, updated_at
+      INSERT INTO blog_posts (
+        slug, title, excerpt, content, featured_image, author_name, author_role,
+        category, tags, is_published, is_featured, read_time, publish_date
+      )
+      VALUES (
+        ${finalSlug}, ${title}, ${excerpt || null}, ${content}, ${featured_image || null}, 
+        ${author_name}, ${author_role || null}, ${category}, ${tags || []}, 
+        ${is_published}, ${is_featured}, ${read_time || null}, ${publish_date || null}
+      )
+      RETURNING *
     `
 
     const newPost = result[0]
-    const formattedPost = {
-      ...newPost,
-      id: newPost.id.toString(),
-      author: newPost.author_name,
-      createdAt: formatDate(new Date(newPost.created_at)),
-      updatedAt: formatDate(new Date(newPost.updated_at))
-    }
 
-    return NextResponse.json({ success: true, post: formattedPost }, { status: 201 })
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Blog post created successfully',
+      post: newPost 
+    }, { status: 201 })
   } catch (error) {
     console.error('Error creating blog post:', error)
+    
+    // Handle unique constraint violation
+    if (error instanceof Error && error.message.includes('duplicate key value violates unique constraint')) {
+      return NextResponse.json(
+        { success: false, message: 'A blog post with this slug already exists. Please use a different title or slug.' },
+        { status: 409 }
+      )
+    }
+    
     return NextResponse.json(
-      { success: false, message: 'Failed to create blog post' },
+      { success: false, message: 'Failed to create blog post', error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }
@@ -137,18 +167,26 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const data = await request.json()
-    const { id, title, excerpt, content, category, status, featured } = data
+    const { 
+      id, title, slug, excerpt, content, featured_image, author_name, author_role,
+      category, tags, is_published, is_featured, read_time, publish_date
+    } = data
 
-    // Generate new slug if title changed
-    const slug = createSlug(title)
+    // Generate new slug if title changed and no custom slug provided
+    const finalSlug = slug || createSlug(title)
 
     // Update blog post
     const result = await sql`
       UPDATE blog_posts 
-      SET title = ${title}, slug = ${slug}, excerpt = ${excerpt}, content = ${content}, 
-          category = ${category}, status = ${status}, featured = ${featured}, updated_at = CURRENT_TIMESTAMP
+      SET 
+        slug = ${finalSlug}, title = ${title}, excerpt = ${excerpt || null}, 
+        content = ${content}, featured_image = ${featured_image || null}, 
+        author_name = ${author_name}, author_role = ${author_role || null},
+        category = ${category}, tags = ${tags || []}, is_published = ${is_published}, 
+        is_featured = ${is_featured}, read_time = ${read_time || null}, 
+        publish_date = ${publish_date || null}, updated_at = CURRENT_TIMESTAMP
       WHERE id = ${parseInt(id)}
-      RETURNING id, title, slug, excerpt, content, category, status, featured, author_name, created_at, updated_at
+      RETURNING *
     `
 
     if (result.length === 0) {
@@ -159,19 +197,25 @@ export async function PUT(request: NextRequest) {
     }
 
     const updatedPost = result[0]
-    const formattedPost = {
-      ...updatedPost,
-      id: updatedPost.id.toString(),
-      author: updatedPost.author_name,
-      createdAt: formatDate(new Date(updatedPost.created_at)),
-      updatedAt: formatDate(new Date(updatedPost.updated_at))
-    }
 
-    return NextResponse.json({ success: true, post: formattedPost })
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Blog post updated successfully',
+      post: updatedPost 
+    })
   } catch (error) {
     console.error('Error updating blog post:', error)
+    
+    // Handle unique constraint violation
+    if (error instanceof Error && error.message.includes('duplicate key value violates unique constraint')) {
+      return NextResponse.json(
+        { success: false, message: 'A blog post with this slug already exists. Please use a different slug.' },
+        { status: 409 }
+      )
+    }
+    
     return NextResponse.json(
-      { success: false, message: 'Failed to update blog post' },
+      { success: false, message: 'Failed to update blog post', error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }
@@ -203,11 +247,14 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    return NextResponse.json({ success: true, message: 'Blog post deleted successfully' })
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Blog post deleted successfully' 
+    })
   } catch (error) {
     console.error('Error deleting blog post:', error)
     return NextResponse.json(
-      { success: false, message: 'Failed to delete blog post' },
+      { success: false, message: 'Failed to delete blog post', error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }

@@ -27,51 +27,59 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search')
     const offset = (page - 1) * limit
 
-    // Start with base query for published posts
+    // Start with base conditions for published posts
     let posts
     let total = 0
 
     if (category && category !== 'All Categories' && search) {
       // Both category and search filters
+      const dbCategory = category.toLowerCase().replace(/\s+/g, '-').replace(/&/g, '').trim()
+      
       posts = await sql`
         SELECT 
-          id, title, excerpt, author_name as author, category, created_at as published_date, 
-          slug, is_featured as featured
+          id, title, slug, excerpt, content, featured_image, author_name, author_role,
+          category, tags, is_published, is_featured, read_time, views, publish_date, 
+          created_at, updated_at
         FROM blog_posts 
-        WHERE category = ${category}
+        WHERE is_published = true
+          AND category = ${dbCategory}
           AND (title ILIKE ${`%${search}%`} OR excerpt ILIKE ${`%${search}%`} OR content ILIKE ${`%${search}%`})
         ORDER BY 
           CASE WHEN is_featured = true THEN 0 ELSE 1 END,
-          created_at DESC 
+          COALESCE(publish_date, created_at) DESC 
         LIMIT ${limit} OFFSET ${offset}
       `
       
       const countResult = await sql`
         SELECT COUNT(*) as total 
         FROM blog_posts 
-        WHERE category = ${category}
+        WHERE is_published = true
+          AND category = ${dbCategory}
           AND (title ILIKE ${`%${search}%`} OR excerpt ILIKE ${`%${search}%`} OR content ILIKE ${`%${search}%`})
       `
       total = parseInt(countResult[0]?.total || '0')
       
     } else if (category && category !== 'All Categories') {
       // Only category filter
+      const dbCategory = category.toLowerCase().replace(/\s+/g, '-').replace(/&/g, '').trim()
+      
       posts = await sql`
         SELECT 
-          id, title, excerpt, author_name as author, category, created_at as published_date, 
-          slug, is_featured as featured
+          id, title, slug, excerpt, content, featured_image, author_name, author_role,
+          category, tags, is_published, is_featured, read_time, views, publish_date, 
+          created_at, updated_at
         FROM blog_posts 
-        WHERE category = ${category}
+        WHERE is_published = true AND category = ${dbCategory}
         ORDER BY 
           CASE WHEN is_featured = true THEN 0 ELSE 1 END,
-          created_at DESC 
+          COALESCE(publish_date, created_at) DESC 
         LIMIT ${limit} OFFSET ${offset}
       `
       
       const countResult = await sql`
         SELECT COUNT(*) as total 
         FROM blog_posts 
-        WHERE category = ${category}
+        WHERE is_published = true AND category = ${dbCategory}
       `
       total = parseInt(countResult[0]?.total || '0')
       
@@ -79,56 +87,68 @@ export async function GET(request: NextRequest) {
       // Only search filter
       posts = await sql`
         SELECT 
-          id, title, excerpt, author_name as author, category, created_at as published_date, 
-          slug, is_featured as featured
+          id, title, slug, excerpt, content, featured_image, author_name, author_role,
+          category, tags, is_published, is_featured, read_time, views, publish_date, 
+          created_at, updated_at
         FROM blog_posts 
-        WHERE (title ILIKE ${`%${search}%`} OR excerpt ILIKE ${`%${search}%`} OR content ILIKE ${`%${search}%`})
+        WHERE is_published = true
+          AND (title ILIKE ${`%${search}%`} OR excerpt ILIKE ${`%${search}%`} OR content ILIKE ${`%${search}%`})
         ORDER BY 
           CASE WHEN is_featured = true THEN 0 ELSE 1 END,
-          created_at DESC 
+          COALESCE(publish_date, created_at) DESC 
         LIMIT ${limit} OFFSET ${offset}
       `
       
       const countResult = await sql`
         SELECT COUNT(*) as total 
         FROM blog_posts 
-        WHERE (title ILIKE ${`%${search}%`} OR excerpt ILIKE ${`%${search}%`} OR content ILIKE ${`%${search}%`})
+        WHERE is_published = true
+          AND (title ILIKE ${`%${search}%`} OR excerpt ILIKE ${`%${search}%`} OR content ILIKE ${`%${search}%`})
       `
       total = parseInt(countResult[0]?.total || '0')
       
     } else {
-      // No filters
+      // No filters - just published posts
       posts = await sql`
         SELECT 
-          id, title, excerpt, author_name as author, category, created_at as published_date, 
-          slug, is_featured as featured
+          id, title, slug, excerpt, content, featured_image, author_name, author_role,
+          category, tags, is_published, is_featured, read_time, views, publish_date, 
+          created_at, updated_at
         FROM blog_posts 
+        WHERE is_published = true
         ORDER BY 
           CASE WHEN is_featured = true THEN 0 ELSE 1 END,
-          created_at DESC 
+          COALESCE(publish_date, created_at) DESC 
         LIMIT ${limit} OFFSET ${offset}
       `
       
       const countResult = await sql`
         SELECT COUNT(*) as total 
         FROM blog_posts
+        WHERE is_published = true
       `
       total = parseInt(countResult[0]?.total || '0')
     }
 
-    // Transform the data to match the expected format
+    // Transform the data to match the expected frontend format
     const transformedPosts = posts.map((post: any) => ({
       id: post.id,
       title: post.title,
-      excerpt: post.excerpt,
-      author: post.author || 'Admin User',
-      category: post.category,
-      publishDate: post.published_date,
-      readTime: '5 min read', // Default value since reading_time doesn't exist
-      image: getPlaceholderImage(post.id), // Assign different placeholder images based on post ID
-      tags: [], // Default value since tags doesn't exist
-      featured: post.featured || false,
-      views: 0, // Default value since view_count doesn't exist
+      excerpt: post.excerpt || '',
+      author: {
+        name: post.author_name || 'Admin User',
+        role: post.author_role || 'Team Member',
+        avatar: undefined
+      },
+      category: post.category ? post.category.split('-').map((word: string) => 
+        word.charAt(0).toUpperCase() + word.slice(1)
+      ).join(' ') : 'General',
+      publishDate: post.publish_date || post.created_at,
+      readTime: post.read_time ? `${post.read_time} min read` : '5 min read',
+      image: post.featured_image || getPlaceholderImage(post.id),
+      tags: Array.isArray(post.tags) ? post.tags : (post.tags ? [post.tags] : []),
+      featured: post.is_featured || false,
+      views: post.views || 0,
       slug: post.slug
     }))
 
